@@ -1,0 +1,96 @@
+robot_arm_driver:
+  ros__parameters:
+    serial_port: /dev/ttyUSB0
+    baud_rate: 1000000
+    joint_names: ['joint_0', 'joint_1','joint_2','joint_3','joint_4','joint_5','joint_6']
+    joints:
+      joint_0:
+        index: 0
+        id: 10
+        invert: False
+        min_pos: -3.1416
+        max_pos: 3.1416
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 50
+        speed: 2.0
+        acceleration: 0.46
+        offset: 0.0
+        offset_gain: 0.0
+        
+      joint_1:
+        index: 1
+        id: 11
+        invert: False
+        min_pos: -1.8515
+        max_pos: 2.1015
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 1.33
+        speed: 2.0
+        acceleration: 0.46
+        offset: 0.0122718463
+        offset_gain: 10.0
+
+      joint_2:
+        index: 2
+        id: 12
+        invert: False
+        min_pos: -0.4
+        max_pos: 3.0
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 1.33
+        speed: 2.0
+        acceleration: 0.46
+        offset: 0.0122718463
+        offset_gain: 10.0
+
+      joint_3:
+        index: 3
+        id: 13
+        invert: False
+        min_pos: -3.1416
+        max_pos: 3.1416
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 50
+        speed: 2.0
+        acceleration: 0.46
+        offset: 0.0
+        offset_gain: 0.0
+
+      joint_4:
+        index: 4
+        id: 14
+        invert: False
+        min_pos: -1.8
+        max_pos: 2.0
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 50
+        speed: 2.0
+        acceleration: 0.46
+        offset: 0.0
+        offset_gain: 0.0
+
+      joint_5:
+        index: 5
+        id: 15
+        invert: False
+        min_pos: -3.1415
+        max_pos: 3.1416
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 50
+        speed: 2.0
+        acceleration: 0.46
+        offset: 0.0
+        offset_gain: 0.0
+
+      joint_6:
+        index: 6
+        id: 16
+        invert: False
+        min_pos: 0.0
+        max_pos: 1.75
+        angle_resolution: 0.0879 #degrees
+        step_per_sec: 50
+        speed: 3.0
+        acceleration: 2
+        offset: 0.0
+        offset_gain: 0.0
