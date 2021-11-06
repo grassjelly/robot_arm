@@ -17,9 +17,9 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 
-from pyfeetech.servo import Servo
+from pyfeetech.servo import Revolute, Prismatic, Controller
 
-params = [
+revolute_params = [
     'index',
     'id',
     'invert',
@@ -30,7 +30,8 @@ params = [
     'speed',
     'acceleration',
     'offset',
-    'offset_gain'
+    'offset_gain',
+    'horn_radius'
 ]
 
 class RobotArmDriver(Node):
@@ -44,41 +45,61 @@ class RobotArmDriver(Node):
             parameters=[
                 ('serial_port', '/dev/ttyUSB0'),
                 ('baud_rate', 1000000),
-                ('joint_names', [])
-
+                ('revolute_joint_names', []),
+                ('prismatic_joint_names', []),
         ])
 
         serial_port = self.get_parameter('serial_port').value
         baud_rate = self.get_parameter('baud_rate').value
-        self._joints_config = {}
-        self._joint_names = self.get_parameter('joint_names').value
-        for joint_name in self._joint_names:
-            self._joints_config[joint_name] = {}
-            for param_name in params:
-                self.declare_parameter(f'joints.{joint_name}.{param_name}')
-                param = self.get_parameter(f'joints.{joint_name}.{param_name}').value
-                self._joints_config[joint_name][param_name] = param
+        self._joint_names = []
+        rev_joint_names = self.get_parameter('revolute_joint_names').value
+        pris_joint_names = self.get_parameter('prismatic_joint_names').value
 
-        self._servos = Servo(
-            serial_port, 
-            baud_rate, 
-            self._joints_config
+        self._controller = Controller(serial_port, baud_rate)
+
+        self._revolute_joints = Revolute(
+            self._controller, 
+            self._get_joints_config(rev_joint_names, 'revolute_joints')
         )
-        self._servos.init()
+        revolute_joints_ok = self._revolute_joints.init(disable_joints=True)
+        if not revolute_joints_ok:
+            print("Failed to init revolute joints.")
+
+        self._prismatic_joints = Prismatic(
+            self._controller, 
+            self._get_joints_config(pris_joint_names, 'prismatic_joints')
+        )
+        prismatic_joints_ok = self._prismatic_joints.init(disable_joints=True)
+        if not prismatic_joints_ok:
+            print("Failed to init prismatic joints.")
         
-        self._joint_states = len(self._joint_names) * [0.0]
+        self._joint_names = rev_joint_names + pris_joint_names
+        self._joint_states = (len(rev_joint_names) + len(pris_joint_names)) * [0.0]
 
         self._joint_states_msg = JointState()
-        self._joint_states_msg.header.frame_id = 'base_mount'
         self._joint_states_msg.name = self._joint_names 
         self._joint_states_msg.position = self._joint_states 
 
         self._joint_states_publisher = self.create_publisher(JointState, 'joint_states', 10)
 
-        brake_timer = self.create_timer(0.2, self.control_callback)
+        brake_timer = self.create_timer(0.02, self.control_callback)
+
+    def _get_joints_config(self, joint_names, joint_type):
+        joints_config = {}
+        for joint_name in joint_names:
+            joints_config[joint_name] = {}
+            for param_name in revolute_params:
+                self.declare_parameter(f'{joint_type}.{joint_name}.{param_name}')
+                param = self.get_parameter(f'{joint_type}.{joint_name}.{param_name}').value
+                joints_config[joint_name][param_name] = param
+        return joints_config
 
     def control_callback(self):
-        self._joint_states_msg.position = self._joint_states
+        rev_pos, rev_vel = self._revolute_joints.state
+        pris_pos, pris_vel = self._prismatic_joints.state
+        self._joint_states_msg.position = rev_pos + pris_pos
+        self._joint_states_msg.velocity = rev_vel + rev_vel
+
         self._joint_states_msg.header.stamp = self.get_clock().now().to_msg()
         self._joint_states_publisher.publish(self._joint_states_msg)
 
