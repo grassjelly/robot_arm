@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
       Splitter Ratio: 0.5
-    Tree Height: 907
+    Tree Height: 363
 Visualization Manager:
   Class: ""
   Displays:
@@ -60,12 +60,42 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        mimic_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         pan_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         shoulder_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist0_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -86,9 +116,21 @@ Visualization Manager:
           Value: true
         elbow_link:
           Value: true
+        finger_link:
+          Value: true
+        gripper_link:
+          Value: true
+        mimic_finger_link:
+          Value: true
         pan_link:
           Value: true
         shoulder_link:
+          Value: true
+        wrist0_link:
+          Value: true
+        wrist1_link:
+          Value: true
+        wrist2_link:
           Value: true
       Marker Scale: 0.10000000149011612
       Name: TF
@@ -101,7 +143,14 @@ Visualization Manager:
             pan_link:
               shoulder_link:
                 elbow_link:
-                  {}
+                  wrist0_link:
+                    wrist1_link:
+                      wrist2_link:
+                        gripper_link:
+                          finger_link:
+                            {}
+                          mimic_finger_link:
+                            {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/Axes
@@ -132,33 +181,33 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.577939748764038
+      Distance: 1.36859130859375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0093952976167202
-        Y: -0.07194878160953522
-        Z: 0.26857617497444153
+        X: 0.022281406447291374
+        Y: -0.011478783562779427
+        Z: 0.09136351197957993
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -0.01960160955786705
+      Pitch: 0.2053983509540558
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.520397424697876
+      Yaw: 0.5653979182243347
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
-  Height: 1136
-  Hide Left Dock: false
+    collapsed: true
+  Height: 842
+  Hide Left Dock: true
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000015600000416fc0200000001fb000000100044006900730070006c006100790073010000003d00000416000000c900ffffff000005f40000041600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-  Width: 1872
-  X: 48
-  Y: 27
+  QMainWindow State: 000000ff00000000fd00000001000000000000015600000416fc0200000001fb000000100044006900730070006c006100790073000000003d00000416000000c900ffffff0000035e000002f000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 862
+  X: 909
+  Y: 82
