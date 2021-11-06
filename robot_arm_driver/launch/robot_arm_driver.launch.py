@@ -16,6 +16,9 @@ from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
@@ -23,12 +26,30 @@ def generate_launch_description():
         [FindPackageShare('robot_arm_driver'), 'config', 'joints.yaml']
     )
 
+    description_launch_path = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_description'), 'launch', 'description.launch.py']
+    )
+
     return LaunchDescription([
+        DeclareLaunchArgument(
+            name='rviz', 
+            default_value='false',
+            description='Run rviz'
+        ),
+
         Node(
             package='robot_arm_driver',
             executable='robot_arm_driver',
             name='robot_arm_driver',
             output='screen',
             parameters=[joints_config]
+        ),
+
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(description_launch_path),
+            launch_arguments={
+                'publish_joints': 'false',
+                'rviz': LaunchConfiguration("rviz")
+            }.items()
         )
     ])
