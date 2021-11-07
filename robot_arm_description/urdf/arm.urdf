@@ -231,4 +231,54 @@
     <origin rpy="0 0 0" xyz="0.0 0 0"/>
   </joint>
 
+  <ros2_control name="robot_arm" type="system">
+    <hardware>
+        <plugin>fake_components/GenericSystem</plugin>
+    </hardware>
+    <joint name="pan_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+    <joint name="shoulder_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+    <joint name="elbow_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+    <joint name="wrist0_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+    <joint name="wrist1_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+    <joint name="wrist2_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="finger_joint">
+        <param name="initial_position">0.0</param>
+        <command_interface name="position" />
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+  </ros2_control>
+
 </robot>
