@@ -1,0 +1,15 @@
+controller_list:
+  - name: fake_robot_arm_controller
+    joints:
+      - pan_joint
+      - shoulder_joint
+      - elbow_joint
+      - wrist0_joint
+      - wrist1_joint
+      - wrist2_joint
+  - name: fake_gripper_controller
+    joints:
+      - finger_joint
+initial:
+  - group: robot_arm
+    pose: home
