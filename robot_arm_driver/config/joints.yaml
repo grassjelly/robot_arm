@@ -3,6 +3,8 @@ robot_arm_driver:
     serial_port: /dev/ttyUSB0
     baud_rate: 1000000
     revolute_joint_names: ['pan_joint', 'shoulder_joint', 'elbow_joint', 'wrist0_joint', 'wrist1_joint', 'wrist2_joint']
+    initial_pos: [0.0, -0.7853, 2.35619, 0.0, 1.5708, 0.0]
+
     revolute_joints:
       pan_joint:
         index: 0
@@ -14,6 +16,8 @@ robot_arm_driver:
         step_per_sec: 50
         speed: 2.0
         acceleration: 0.46
+        torque: 40
+        max_torque: 40
         offset: 0.0
         offset_gain: 0.0
         
@@ -27,6 +31,8 @@ robot_arm_driver:
         step_per_sec: 1.33
         speed: 2.0
         acceleration: 0.46
+        torque: 85
+        max_torque: 85
         offset: 0.0122718463
         offset_gain: 10.0
 
@@ -40,7 +46,9 @@ robot_arm_driver:
         step_per_sec: 1.33
         speed: 2.0
         acceleration: 0.46
-        offset: 0.0122718463
+        torque: 85
+        max_torque: 85
+        offset: 0.00409061543
         offset_gain: 10.0
 
       wrist0_joint:
@@ -53,6 +61,8 @@ robot_arm_driver:
         step_per_sec: 50
         speed: 2.0
         acceleration: 0.46
+        torque: 40
+        max_torque: 40
         offset: 0.0
         offset_gain: 0.0
 
@@ -66,6 +76,8 @@ robot_arm_driver:
         step_per_sec: 50
         speed: 2.0
         acceleration: 0.46
+        torque: 40
+        max_torque: 40
         offset: 0.0
         offset_gain: 0.0
 
@@ -79,6 +91,8 @@ robot_arm_driver:
         step_per_sec: 50
         speed: 2.0
         acceleration: 0.46
+        torque: 40
+        max_torque: 40
         offset: 0.0
         offset_gain: 0.0
 
@@ -94,6 +108,9 @@ robot_arm_driver:
         angle_resolution: 0.0879 #degrees
         step_per_sec: 50
         speed: 0.5 
+        acceleration: 2
+        torque: 3
+        max_torque: 40
         acceleration: 2
         offset: 0.0
         offset_gain: 0.0
