@@ -231,6 +231,13 @@
     <origin rpy="0 0 0" xyz="0.0 0 0"/>
   </joint>
 
+  <link name="tool_link" />
+  <joint name="tool_joint" type="fixed">
+    <parent link="wrist2_link"/>
+    <child link="tool_link"/>
+    <origin rpy="0 0 0" xyz="0.0 0 0.10393"/>
+  </joint>
+
   <ros2_control name="robot_arm" type="system">
     <hardware>
         <plugin>fake_components/GenericSystem</plugin>
