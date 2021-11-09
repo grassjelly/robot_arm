@@ -106,12 +106,12 @@ def generate_launch_description():
     )
     ld.add_action(spawner_node)
 
-    # spawner_node2 = Node(
-    #     package='controller_manager',
-    #     executable='spawner.py',
-    #     output='screen',
-    #     arguments=['joint_state_broadcaster'],
-    # )
-    # ld.add_action(spawner_node2)
+    spawner_node2 = Node(
+        package='controller_manager',
+        executable='spawner.py',
+        output='screen',
+        arguments=['joint_state_broadcaster'],
+    )
+    ld.add_action(spawner_node2)
 
     return ld

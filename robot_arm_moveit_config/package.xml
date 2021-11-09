@@ -7,6 +7,7 @@
   <maintainer email="jimenojmm@gmail.com">Juan Miguel Jimeno</maintainer>
   <license>Apache License 2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <run_depend>ament_index_python</run_depend>
   <run_depend>joint_state_publisher</run_depend>
   <run_depend>joint_state_publisher_gui</run_depend>
   <run_depend>moveit_kinematics</run_depend>
