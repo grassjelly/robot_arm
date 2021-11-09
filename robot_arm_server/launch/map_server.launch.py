@@ -8,7 +8,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     config_path = PathJoinSubstitution(
-        [FindPackageShare("pick_n_place_server"), "config", "config.yaml"]
+        [FindPackageShare("robot_arm_server"), "config", "config.yaml"]
     )
 
     default_map = PathJoinSubstitution(

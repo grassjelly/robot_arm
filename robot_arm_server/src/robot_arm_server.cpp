@@ -4,12 +4,12 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-#include <pick_n_place_server_node.h>
+#include <robot_arm_server_node.h>
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PickNPlaceServer>());
+  rclcpp::spin(std::make_shared<RobotArmServer>());
   rclcpp::shutdown();
   return 0;
 }

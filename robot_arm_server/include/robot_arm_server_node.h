@@ -1,6 +1,6 @@
 
-#ifndef PICK_N_PLACE_SERVER_H
-#define PICK_N_PLACE_SERVER_H
+#ifndef ROBOT_ARM_SERVER_H
+#define ROBOT_ARM_SERVER_H
 
 #include <rclcpp/rclcpp.hpp>
 #include <chrono>
@@ -10,10 +10,10 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-class PickNPlaceServer : public rclcpp::Node
+class RobotArmServer : public rclcpp::Node
 {
   public:
-    PickNPlaceServer();
+    RobotArmServer();
 
   private:
 };

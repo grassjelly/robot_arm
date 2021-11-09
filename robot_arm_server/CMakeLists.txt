@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(pick_n_place_server)
+project(robot_arm_server)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -23,11 +23,11 @@ include_directories(
   ${rclcpp_INCLUDE_DIRS}
 )
 
-add_library(pick_n_place_server_node src/pick_n_place_server_node.cpp)
+add_library(robot_arm_server_node src/robot_arm_server_node.cpp)
 
-add_executable(pick_n_place_server src/pick_n_place_server.cpp)
-target_link_libraries(pick_n_place_server pick_n_place_server_node)
-ament_target_dependencies(pick_n_place_server rclcpp nav_msgs)
+add_executable(robot_arm_server src/robot_arm_server.cpp)
+target_link_libraries(robot_arm_server robot_arm_server_node)
+ament_target_dependencies(robot_arm_server rclcpp)
 
 install(
   DIRECTORY launch
@@ -35,7 +35,7 @@ install(
 )
 
 install(
-  TARGETS pick_n_place_server
+  TARGETS robot_arm_server
   DESTINATION lib/${PROJECT_NAME}
 )
 
