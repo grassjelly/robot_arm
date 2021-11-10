@@ -36,6 +36,8 @@ def generate_launch_description():
                                         description="By default, hide joint_state_publisher's GUI"))
     ld.add_action(DeclareLaunchArgument('use_rviz', default_value='true', choices=['true', 'false']))
 
+    ld.add_action(DeclareLaunchArgument('fake_robot', default_value='false', choices=['true', 'false']))
+
     # Load the URDF, SRDF and other .yaml configuration files
     robot_description_content = Command(
         ['xacro ', urdf_path]
@@ -111,6 +113,7 @@ def generate_launch_description():
         executable='spawner.py',
         output='screen',
         arguments=['joint_state_broadcaster'],
+        condition=IfCondition(LaunchConfiguration("fake_robot")),
     )
     ld.add_action(spawner_node2)
 
