@@ -6,6 +6,11 @@
   <description>ROS2 Robot Arm Commander</description>
   <maintainer email="jimenojmm@gmail.com">juan</maintainer>
   <license>Apache2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>moveit_msgs</exec_depend>
+  <exec_depend>shape_msgs</exec_depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>

@@ -24,18 +24,15 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
+import time
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.duration import Duration
-# from tf.listener import TransformListener
 from geometry_msgs.msg import *
 from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import Constraints, JointConstraint, PositionConstraint, OrientationConstraint, BoundingVolume
 from shape_msgs.msg import SolidPrimitive
-from tf2_ros.buffer import Buffer
-
 
 
 ## @brief Pure python interface to move_group action
@@ -47,57 +44,25 @@ class MoveGroupInterface(Node):
     ## @param move_group Name of the action server
     ## @param listener A TF listener instance (optional, will create a new one if None)
     ## @param plan_only Should we only plan, but not execute?
-    def __init__(self, group, frame, listener=None, plan_only=False, move_group="move_action"):
+    def __init__(self, group, base_frame, planning_frame, plan_only=False, move_group="move_action"):
         super().__init__('moveit2_commander')
-
         self._group = group
-        self._fixed_frame = frame
-        # self._action = actionlib.SimpleActionClient(move_group,
-        #                                             MoveGroupAction)
-        
-        
-        self._action = ActionClient(self, MoveGroup, move_group)
+        self._fixed_frame = base_frame
+        self._planning_frame = planning_frame
 
+    
+        self._action = ActionClient(self, MoveGroup, move_group)
         self._action.wait_for_server()
-        # if listener == None:
-        #     self._listener = TransformListener()
-        # else:
-        #     self._listener = listener
+  
         self.plan_only = plan_only
         self.planner_id = None
         self.planning_time = 15.0
-
-        self._tf_buffer = Buffer()
-
-    def transform_pose(self, input_pose, fixed_frame):
-        now = rclpy.time.Time()
-        transform = self._tf_buffer.lookup_transform(
-            "base_mount",
-            "tool_link",
-            self.get_clock().now() - Duration(seconds=1))
-
-        pose_stamped = PoseStamped()
-        pose_stamped.header.stamp = self.get_clock().now().to_msg()
-        pose_stamped.header.frame_id = "base_mount"
-
-        pose = Pose()
-        pose.orientation.x = transform.transform.rotation.x,
-        pose.orientation.y = transform.transform.rotation.y,
-        pose.orientation.z = transform.transform.rotation.z,
-        pose.orientation.w = transform.transform.rotation.w,
-        pose.position.x = transform.transform.translation.x,
-        pose.position.y = transform.transform.translation.y,
-        pose.position.z = transform.transform.translation.z,
-        pose_stamped.pose = pose
-        
-        return pose_stamped
-
 
     def get_move_action(self):
         return self._action
 
     ## @brief Move the arm to set of joint position goals
-    def moveToJointPosition(self,
+    def move_to_joint_position(self,
                             joints,
                             positions,
                             tolerance=0.01,
@@ -112,7 +77,7 @@ class MoveGroupInterface(Node):
                           "start_state")
         for arg in kwargs.keys():
             if not arg in supported_args:
-                rospy.loginfo("moveToJointPosition: unsupported argument: %s",
+                rospy.loginfo("move_to_joint_position: unsupported argument: %s",
                               arg)
 
         # Create goal
@@ -187,20 +152,23 @@ class MoveGroupInterface(Node):
         g.planning_options.replan = False
 
         # 13. send goal
-        self._action.send_goal(g)
         if wait:
-            self._action.wait_for_result()
-            return self._action.get_result()
+            return self._action.send_goal(g)
         else:
-            return None
+            return self._action.send_goal_async(g)
+
 
     ## @brief Move the arm, based on a goal pose_stamped for the end effector.
-    def moveToPose(self,
+    def move_to_pose(self,
                    pose_stamped,
-                   gripper_frame,
+                   gripper_frame=None,
                    tolerance=0.01,
                    wait=True,
                    **kwargs):
+        if gripper_frame is None:
+            gripper_frame = self._planning_frame
+        pose_stamped = self._complete_msg(pose_stamped)
+
         # Check arguments
         supported_args = ("max_velocity_scaling_factor",
                           "planner_id",
@@ -209,12 +177,12 @@ class MoveGroupInterface(Node):
                           "start_state")
         for arg in kwargs.keys():
             if not arg in supported_args:
-                rospy.loginfo("moveToPose: unsupported argument: %s",
+                rospy.loginfo("move_to_pose: unsupported argument: %s",
                               arg)
 
         # Create goal
         g = MoveGroup.Goal()
-        pose_transformed = self.transform_pose(pose_stamped, self._fixed_frame)
+        # pose_transformed = self.transform_pose(pose_stamped, self._fixed_frame)
 
         # 1. fill in request workspace_parameters
 
@@ -235,7 +203,7 @@ class MoveGroupInterface(Node):
         s.dimensions = [tolerance * tolerance]
         s.type = s.SPHERE
         b.primitives.append(s)
-        # b.primitive_poses.append(pose_transformed.pose)
+        b.primitive_poses.append(pose_stamped.pose)
         c1.position_constraints[0].constraint_region = b
         c1.position_constraints[0].weight = 1.0
 
@@ -299,16 +267,22 @@ class MoveGroupInterface(Node):
         # 13. send goal
         self._action.send_goal(g)
         if wait:
-            return self._action.send_goal_async(g)
-
+            return self._action.send_goal(g)
         else:
-            return None
+            return self._action.send_goal_async(g)
 
     ## @brief Sets the planner_id used for all future planning requests.
     ## @param planner_id The string for the planner id, set to None to clear
-    def setPlannerId(self, planner_id):
+    def set_planner_id(self, planner_id):
         self.planner_id = str(planner_id)
 
     ## @brief Set default planning time to be used for future planning request.
-    def setPlanningTime(self, time):
+    def set_planning_time(self, time):
         self.planning_time = time
+
+    
+    def _complete_msg(self, pose_stamped):
+        pose_stamped.header.frame_id = self._fixed_frame
+        pose_stamped.header.stamp =  self.get_clock().now().to_msg()
+
+        return pose_stamped
