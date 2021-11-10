@@ -51,15 +51,15 @@ class MoveGroupInterface(Node):
         self._planning_frame = planning_frame
 
     
-        self._action = ActionClient(self, MoveGroup, move_group)
-        self._action.wait_for_server()
+        self._action_client = ActionClient(self, MoveGroup, move_group)
+        self._action_client.wait_for_server()
   
         self.plan_only = plan_only
         self.planner_id = None
         self.planning_time = 15.0
 
     def get_move_action(self):
-        return self._action
+        return self._action_client
 
     ## @brief Move the arm to set of joint position goals
     def move_to_joint_position(self,
@@ -153,9 +153,9 @@ class MoveGroupInterface(Node):
 
         # 13. send goal
         if wait:
-            return self._action.send_goal(g)
+            return self._action_client.send_goal(g)
         else:
-            return self._action.send_goal_async(g)
+            return self._action_client.send_goal_async(g)
 
 
     ## @brief Move the arm, based on a goal pose_stamped for the end effector.
@@ -209,7 +209,7 @@ class MoveGroupInterface(Node):
 
         c1.orientation_constraints.append(OrientationConstraint())
         c1.orientation_constraints[0].header.frame_id = self._fixed_frame
-        c1.orientation_constraints[0].orientation.w = 1.0
+        c1.orientation_constraints[0].orientation = pose_stamped.pose.orientation
         c1.orientation_constraints[0].link_name = gripper_frame
         c1.orientation_constraints[0].absolute_x_axis_tolerance = tolerance
         c1.orientation_constraints[0].absolute_y_axis_tolerance = tolerance
@@ -265,11 +265,10 @@ class MoveGroupInterface(Node):
         g.planning_options.replan = False
 
         # 13. send goal
-        self._action.send_goal(g)
         if wait:
-            return self._action.send_goal(g)
+            return self._action_client.send_goal(g)
         else:
-            return self._action.send_goal_async(g)
+            return self._action_client.send_goal_async(g)
 
     ## @brief Sets the planner_id used for all future planning requests.
     ## @param planner_id The string for the planner id, set to None to clear
@@ -280,7 +279,6 @@ class MoveGroupInterface(Node):
     def set_planning_time(self, time):
         self.planning_time = time
 
-    
     def _complete_msg(self, pose_stamped):
         pose_stamped.header.frame_id = self._fixed_frame
         pose_stamped.header.stamp =  self.get_clock().now().to_msg()

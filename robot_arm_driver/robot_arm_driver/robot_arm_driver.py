@@ -12,17 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import time
 import rclpy
 from rclpy.node import Node
+from rclpy.action import ActionServer
 from sensor_msgs.msg import JointState
 from control_msgs.msg import JointTrajectoryControllerState
+from control_msgs.action import GripperCommand
 from std_msgs.msg import Bool
 from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
 from rclpy.qos import QoSProfile
 from pyfeetech.servo import Revolute, Prismatic, Controller
 
-revolute_params = [
+joint_params = [
     'index',
     'id',
     'invert',
@@ -62,18 +64,20 @@ class RobotArmDriver(Node):
         pris_joint_names = self.get_parameter('prismatic_joint_names').value
 
         self._controller = Controller(serial_port, baud_rate)
-
+        
+        self._revolute_config = self._get_joints_config(rev_joint_names, 'revolute_joints')
         self._revolute_joints = Revolute(
             self._controller, 
-            self._get_joints_config(rev_joint_names, 'revolute_joints')
+            self._revolute_config
         )
         revolute_joints_ok = self._revolute_joints.init()
         if not revolute_joints_ok:
             print("Failed to init revolute joints.")
 
+        self._prismatic_config = self._get_joints_config(pris_joint_names, 'prismatic_joints')
         self._prismatic_joints = Prismatic(
             self._controller, 
-            self._get_joints_config(pris_joint_names, 'prismatic_joints')
+            self._prismatic_config
         )
         prismatic_joints_ok = self._prismatic_joints.init()
         if not prismatic_joints_ok:
@@ -90,7 +94,7 @@ class RobotArmDriver(Node):
 
         self._joint_states_publisher = self.create_publisher(JointState, 'joint_states', 10)
 
-        brake_timer = self.create_timer(0.02, self.control_callback)
+        brake_timer = self.create_timer(0.02, self._control_callback)
 
         pos_goal_qos = QoSProfile(
           durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -106,15 +110,29 @@ class RobotArmDriver(Node):
             pos_goal_qos
         )
 
-        self._pos_goal_subscirber = self.create_subscription(
-            Bool,
-            'gripper',
-            self._gripper_callback,
-            pos_goal_qos
+        self._action_server = ActionServer(
+            self,
+            GripperCommand,
+            'gripper_command',
+            self._gripper_callback
         )
 
-    def _gripper_callback(self, msg):
-        self._gripper_goal = msg.data
+    def _gripper_callback(self, handle):
+        if handle.request.command.position == -1.0:
+            target_pos = self._prismatic_config['finger_joint']['max_pos']
+        else:
+            target_pos = handle.request.command.position
+            
+        
+        self._gripper_goal = abs(target_pos / 2.0)
+        time.sleep(5)
+
+        handle.succeed()
+        result = GripperCommand.Result()
+        pris_pos, pris_vel = self._prismatic_joints.state
+        result.position = pris_pos[0] * 2
+
+        return result
 
     def _pos_goal_callback(self, msg):
         self._joint_goals = msg.actual.positions
@@ -123,21 +141,19 @@ class RobotArmDriver(Node):
         joints_config = {}
         for joint_name in joint_names:
             joints_config[joint_name] = {}
-            for param_name in revolute_params:
+            for param_name in joint_params:
                 self.declare_parameter(f'{joint_type}.{joint_name}.{param_name}')
                 param = self.get_parameter(f'{joint_type}.{joint_name}.{param_name}').value
                 joints_config[joint_name][param_name] = param
         return joints_config
 
-    def control_callback(self):
+    def _control_callback(self):
         rev_pos, rev_vel = self._revolute_joints.state
         pris_pos, pris_vel = self._prismatic_joints.state
 
         self._revolute_joints.go_to(self._joint_goals)
-        if self._gripper_goal:
-            self._prismatic_joints.go_to([0.0])
-        else:
-            self._prismatic_joints.go_to([0.025])
+        self._prismatic_joints.go_to([self._gripper_goal])
+ 
 
 
         self._joint_states_msg.position = rev_pos + pris_pos
