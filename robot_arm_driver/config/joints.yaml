@@ -103,7 +103,7 @@ robot_arm_driver:
         id: 16
         invert: False
         min_pos: 0.0
-        max_pos: 0.045
+        max_pos: 0.042
         horn_radius: 0.014
         angle_resolution: 0.0879 #degrees
         step_per_sec: 50
