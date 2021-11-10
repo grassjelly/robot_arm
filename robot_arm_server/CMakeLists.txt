@@ -18,7 +18,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
-
+find_package(moveit_core REQUIRED)
+find_package(moveit_ros_planning REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
 
 include_directories(
   include
@@ -30,7 +32,7 @@ add_library(robot_arm_server_node src/robot_arm_server_node.cpp)
 
 add_executable(robot_arm_server src/robot_arm_server.cpp)
 target_link_libraries(robot_arm_server robot_arm_server_node)
-ament_target_dependencies(robot_arm_server rclcpp Eigen3)
+ament_target_dependencies(robot_arm_server rclcpp Eigen3 moveit_core moveit_ros_planning_interface)
 
 install(
   DIRECTORY launch
