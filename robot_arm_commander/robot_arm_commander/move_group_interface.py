@@ -28,26 +28,15 @@
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.duration import Duration
 # from tf.listener import TransformListener
 from geometry_msgs.msg import *
 from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import Constraints, JointConstraint, PositionConstraint, OrientationConstraint, BoundingVolume
 from shape_msgs.msg import SolidPrimitive
-import tf2_ros
+from tf2_ros.buffer import Buffer
 
-def transform_pose(input_pose, to_frame):
 
-    # **Assuming /tf2 topic is being broadcasted
-    tf_buffer = tf2_ros.Buffer()
-    listener = tf2_ros.TransformListener(tf_buffer)
-
-    try:
-        # ** It is important to wait for the listener to start listening. Hence the rospy.Duration(1)
-        output_pose_stamped = tf_buffer.transform(pose_stamped, to_frame, rospy.Duration(1))
-        return output_pose_stamped.pose
-
-    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-        raise
 
 ## @brief Pure python interface to move_group action
 class MoveGroupInterface(Node):
@@ -77,6 +66,32 @@ class MoveGroupInterface(Node):
         self.plan_only = plan_only
         self.planner_id = None
         self.planning_time = 15.0
+
+        self._tf_buffer = Buffer()
+
+    def transform_pose(self, input_pose, fixed_frame):
+        now = rclpy.time.Time()
+        transform = self._tf_buffer.lookup_transform(
+            "base_mount",
+            "tool_link",
+            self.get_clock().now() - Duration(seconds=1))
+
+        pose_stamped = PoseStamped()
+        pose_stamped.header.stamp = self.get_clock().now().to_msg()
+        pose_stamped.header.frame_id = "base_mount"
+
+        pose = Pose()
+        pose.orientation.x = transform.transform.rotation.x,
+        pose.orientation.y = transform.transform.rotation.y,
+        pose.orientation.z = transform.transform.rotation.z,
+        pose.orientation.w = transform.transform.rotation.w,
+        pose.position.x = transform.transform.translation.x,
+        pose.position.y = transform.transform.translation.y,
+        pose.position.z = transform.transform.translation.z,
+        pose_stamped.pose = pose
+        
+        return pose_stamped
+
 
     def get_move_action(self):
         return self._action
@@ -199,7 +214,7 @@ class MoveGroupInterface(Node):
 
         # Create goal
         g = MoveGroup.Goal()
-        # pose_transformed = transform_pose(pose_stamped, self._fixed_frame)
+        pose_transformed = self.transform_pose(pose_stamped, self._fixed_frame)
 
         # 1. fill in request workspace_parameters
 
