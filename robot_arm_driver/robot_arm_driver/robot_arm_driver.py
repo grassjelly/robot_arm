@@ -148,8 +148,14 @@ class RobotArmDriver(Node):
         return joints_config
 
     def _control_callback(self):
-        rev_pos, rev_vel = self._revolute_joints.state
-        pris_pos, pris_vel = self._prismatic_joints.state
+        rev_pos, rev_vel, rev_mov_state = self._revolute_joints.state
+        pris_pos, pris_vel, pris_mov_state = self._prismatic_joints.state
+
+        for moving_state in rev_mov_state:
+            self.get_logger().info('hello')
+
+            self.get_logger().info('MOVING: "%d"' % moving_state)
+
 
         self._revolute_joints.go_to(self._joint_goals)
         self._prismatic_joints.go_to([self._gripper_goal])
