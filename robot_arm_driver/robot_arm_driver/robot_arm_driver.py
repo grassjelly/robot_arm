@@ -13,16 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import time
+import copy
+import threading
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionServer
+from rclpy.executors import Executor, MultiThreadedExecutor
+from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
+from rclpy.qos import QoSProfile
+
 from sensor_msgs.msg import JointState
 from control_msgs.msg import JointTrajectoryControllerState
 from control_msgs.action import GripperCommand
 from std_msgs.msg import Bool
-from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
-from rclpy.qos import QoSProfile
+
 from pyfeetech.servo import Revolute, Prismatic, Controller
+
 
 joint_params = [
     'index',
@@ -41,60 +47,54 @@ joint_params = [
     'horn_radius'
 ]
 
-class RobotArmDriver(Node):
-    def __init__(self):
-        super().__init__(
-            'robot_arm_driver', 
-            allow_undeclared_parameters=True
+
+class GripperActionServer(Node):
+    def __init__(self, base_arm):
+        super().__init__('gripper_action_server')
+        self._lock = threading.Lock()
+
+        self._gripper_state = base_arm.gripper_state
+
+        self._max_pos = base_arm.gripper_max_position
+
+        self._gripper_command = [0.0]
+        self._action_server = ActionServer(
+            self,
+            GripperCommand,
+            'gripper_command',
+            self._gripper_callback
         )
-        self.declare_parameters(
-            namespace='',
-            parameters=[
-                ('serial_port', '/dev/ttyUSB0'),
-                ('baud_rate', 1000000),
-                ('initial_pos', [0,0,0,0,0,0]),
-                ('revolute_joint_names', []),
-                ('prismatic_joint_names', []),
-        ])
 
-        serial_port = self.get_parameter('serial_port').value
-        baud_rate = self.get_parameter('baud_rate').value
-        self._joint_names = []
-        rev_joint_names = self.get_parameter('revolute_joint_names').value
-        pris_joint_names = self.get_parameter('prismatic_joint_names').value
+    def _gripper_callback(self, handle):
+        with self._lock:
+            if handle.request.command.position == -1.0:
+                target_pos = self._max_pos
+            else:
+                target_pos = handle.request.command.position
+                
+            self._gripper_command[0] = abs(target_pos / 2.0)
+            self.get_logger().info(f'GRIPPER REQUEST RECEIVED: {self._gripper_command}')
 
-        self._controller = Controller(serial_port, baud_rate)
-        
-        self._revolute_config = self._get_joints_config(rev_joint_names, 'revolute_joints')
-        self._revolute_joints = Revolute(
-            self._controller, 
-            self._revolute_config
-        )
-        revolute_joints_ok = self._revolute_joints.init()
-        if not revolute_joints_ok:
-            print("Failed to init revolute joints.")
+        time.sleep(0.5)
+        while self._gripper_state['moving']:
+            pass
+        time.sleep(1)
+        handle.succeed()
+        result = GripperCommand.Result()
+        result.position = self._gripper_state['position']
+        return result
 
-        self._prismatic_config = self._get_joints_config(pris_joint_names, 'prismatic_joints')
-        self._prismatic_joints = Prismatic(
-            self._controller, 
-            self._prismatic_config
-        )
-        prismatic_joints_ok = self._prismatic_joints.init()
-        if not prismatic_joints_ok:
-            print("Failed to init prismatic joints.")
-        
-        self._joint_names = rev_joint_names + pris_joint_names
-        self._joint_states = (len(rev_joint_names) + len(pris_joint_names)) * [0.0]
-        self._joint_goals = self.get_parameter('initial_pos').value
-        self._gripper_goal = 0        
+    @property
+    def gripper_command(self):
+        with self._lock:
+            return self._gripper_command
 
-        self._joint_states_msg = JointState()
-        self._joint_states_msg.name = self._joint_names 
-        self._joint_states_msg.position = self._joint_states 
 
-        self._joint_states_publisher = self.create_publisher(JointState, 'joint_states', 10)
-
-        self._control_timer = self.create_timer(0.02, self._control_callback)
+class JointsCommandSubscriber(Node):
+    def __init__(self, base_arm):
+        super().__init__('joint_command_subscriber')
+        self._lock = threading.Lock()
+        self._joints_command = base_arm.initial_position
 
         pos_goal_qos = QoSProfile(
           durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -111,31 +111,73 @@ class RobotArmDriver(Node):
         )
         self._pos_goal_subscirber
 
-        self._action_server = ActionServer(
-            self,
-            GripperCommand,
-            'gripper_command',
-            self._gripper_callback
-        )
-
-    def _gripper_callback(self, handle):
-        if handle.request.command.position == -1.0:
-            target_pos = self._prismatic_config['finger_joint']['max_pos']
-        else:
-            target_pos = handle.request.command.position
-            
-        self._gripper_goal = abs(target_pos / 2.0)
-        time.sleep(5)
-
-        handle.succeed()
-        result = GripperCommand.Result()
-        pris_pos, pris_vel = self._prismatic_joints.state
-        result.position = pris_pos[0] * 2
-
-        return result
-
     def _pos_goal_callback(self, msg):
-        self._joint_goals = msg.actual.positions
+        with self._lock:
+            for i, pos in enumerate(msg.actual.positions):
+                self._joints_command[i] = pos
+
+    @property
+    def joints_command(self):
+        with self._lock:
+            return self._joints_command
+
+class RobotArmDriver(Node):
+    def __init__(self):
+        super().__init__(
+            'robot_arm_driver', 
+            allow_undeclared_parameters=True
+        )
+        self._lock = threading.Lock()
+        self._joints_command = None
+        self._gripper_command = None
+        self._gripper_state = {}
+        self._gripper_state['position'] = 0.0
+        self._gripper_state['moving'] = False
+
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('serial_port', '/dev/ttyUSB0'),
+                ('baud_rate', 1000000),
+                ('initial_pos', [0,0,0,0,0,0]),
+                ('revolute_joint_names', []),
+                ('prismatic_joint_names', []),
+        ])
+
+        serial_port = self.get_parameter('serial_port').value
+        baud_rate = self.get_parameter('baud_rate').value
+        rev_joint_names = self.get_parameter('revolute_joint_names').value
+        pris_joint_names = self.get_parameter('prismatic_joint_names').value
+        self._initial_position = self.get_parameter('initial_pos').value
+
+        self._controller = Controller(serial_port, baud_rate)
+        
+        self._revolute_config = self._get_joints_config(rev_joint_names, 'revolute_joints')
+        self._revolute_joints = Revolute(
+            self._controller, 
+            self._revolute_config
+        )
+        revolute_joints_ok = self._revolute_joints.init()
+        if not revolute_joints_ok:
+            self.get_logger().fatal(f'Failed to initialize revolute joints.')
+            self.destroy_node()
+
+        self._prismatic_config = self._get_joints_config(pris_joint_names, 'prismatic_joints')
+        self._prismatic_joints = Prismatic(
+            self._controller, 
+            self._prismatic_config
+        )
+        prismatic_joints_ok = self._prismatic_joints.init()
+        if not prismatic_joints_ok:
+            self.get_logger().fatal(f'Failed to initialize prismatic joints.')
+            self.destroy_node()
+
+        self._joint_states_msg = JointState()
+        self._joint_states_msg.name = rev_joint_names + pris_joint_names
+        self._joint_states_msg.position = (len(rev_joint_names) + len(pris_joint_names)) * [0.0]
+
+        self._joint_states_publisher = self.create_publisher(JointState, 'joint_states', 10)
+        self._control_timer = self.create_timer(0.01, self._control_callback)
 
     def _get_joints_config(self, joint_names, joint_type):
         joints_config = {}
@@ -148,32 +190,80 @@ class RobotArmDriver(Node):
         return joints_config
 
     def _control_callback(self):
-        rev_pos, rev_vel, rev_mov_state = self._revolute_joints.state
-        pris_pos, pris_vel, pris_mov_state = self._prismatic_joints.state
+        if self._joints_command is None or self._gripper_command is None:
+            return
 
-        for moving_state in rev_mov_state:
-            self.get_logger().info('hello')
+        with self._lock:
+            rev_pos, rev_vel, rev_mov_state = self._revolute_joints.state
+            pris_pos, pris_vel, pris_mov_state = self._prismatic_joints.state
 
-            self.get_logger().info('MOVING: "%d"' % moving_state)
+            self._gripper_state['position'] = pris_pos[0]
+            self._gripper_state['moving']  = pris_mov_state[0]
 
+            self._revolute_joints.go_to(self._joints_command)
+            self._prismatic_joints.go_to(self._gripper_command)
 
-        self._revolute_joints.go_to(self._joint_goals)
-        self._prismatic_joints.go_to([self._gripper_goal])
+            self._joint_states_msg.position = rev_pos + pris_pos
+            self._joint_states_msg.velocity = rev_vel + rev_vel
 
-        self._joint_states_msg.position = rev_pos + pris_pos
-        self._joint_states_msg.velocity = rev_vel + rev_vel
+            self._joint_states_msg.header.stamp = self.get_clock().now().to_msg()
+            self._joint_states_publisher.publish(self._joint_states_msg)
 
-        self._joint_states_msg.header.stamp = self.get_clock().now().to_msg()
-        self._joint_states_publisher.publish(self._joint_states_msg)
+        def _copy_states(self, state, new_state):
+            state_buff = list(state)
+
+    @property
+    def joints_command_subscriber(self):
+        pass
+
+    @property
+    def gripper_action_server(self):
+        pass
+
+    @joints_command_subscriber.setter
+    def joints_command_subscriber(self, joints_command_subscriber):
+        self._joints_command = joints_command_subscriber.joints_command
+
+    @gripper_action_server.setter
+    def gripper_action_server(self, gripper_action_server):
+        self._gripper_command = gripper_action_server.gripper_command
+
+    @property
+    def gripper_max_position(self):
+        return self._prismatic_config['finger_joint']['max_pos']
+
+    @property
+    def gripper_state(self):
+        return self._gripper_state
+
+    @property
+    def initial_position(self):
+        return self._initial_position
 
 
 def main(args=None):
     rclpy.init(args=args)
+    try:
+        robot_arm = RobotArmDriver()
+        joints_command_subscriber = JointsCommandSubscriber(robot_arm)
+        gripper_action_server = GripperActionServer(robot_arm)
+        robot_arm.joints_command_subscriber = joints_command_subscriber
+        robot_arm.gripper_action_server = gripper_action_server
 
-    robot_arm = RobotArmDriver()
-    rclpy.spin(robot_arm)
-    robot_arm.destroy_node()
-    rclpy.shutdown()
+        executor = MultiThreadedExecutor(num_threads=3)
+        executor.add_node(joints_command_subscriber)
+        executor.add_node(gripper_action_server)
+        executor.add_node(robot_arm)
+        try:
+            executor.spin()
+        finally:
+            executor.shutdown()
+            gripper_action_server.destroy_node()
+            joints_command_subscriber.destroy_node()
+            gripper_action_server.destroy_node()
+    finally:
+        rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
