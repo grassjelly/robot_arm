@@ -48,7 +48,7 @@ robot_arm_driver:
         acceleration: 0.46
         torque: 85
         max_torque: 85
-        offset: 0.00409061543
+        offset: 0.0122718463
         offset_gain: 10.0
 
       wrist0_joint:
