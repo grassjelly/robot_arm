@@ -94,7 +94,7 @@ class RobotArmDriver(Node):
 
         self._joint_states_publisher = self.create_publisher(JointState, 'joint_states', 10)
 
-        brake_timer = self.create_timer(0.02, self._control_callback)
+        self._control_timer = self.create_timer(0.02, self._control_callback)
 
         pos_goal_qos = QoSProfile(
           durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -109,6 +109,7 @@ class RobotArmDriver(Node):
             self._pos_goal_callback,
             pos_goal_qos
         )
+        self._pos_goal_subscirber
 
         self._action_server = ActionServer(
             self,
@@ -123,7 +124,6 @@ class RobotArmDriver(Node):
         else:
             target_pos = handle.request.command.position
             
-        
         self._gripper_goal = abs(target_pos / 2.0)
         time.sleep(5)
 
@@ -153,14 +153,13 @@ class RobotArmDriver(Node):
 
         self._revolute_joints.go_to(self._joint_goals)
         self._prismatic_joints.go_to([self._gripper_goal])
- 
-
 
         self._joint_states_msg.position = rev_pos + pris_pos
         self._joint_states_msg.velocity = rev_vel + rev_vel
 
         self._joint_states_msg.header.stamp = self.get_clock().now().to_msg()
         self._joint_states_publisher.publish(self._joint_states_msg)
+
 
 def main(args=None):
     rclpy.init(args=args)
