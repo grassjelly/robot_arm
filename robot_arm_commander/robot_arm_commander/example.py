@@ -79,7 +79,6 @@ def main(args=None):
         pose_msg.pose.position.z = 0.11563699692487717
         manipulator.move_to_pose(pose_msg)
 
-
         pose_msg.pose.orientation.x = -1.020348690872197e-06
         pose_msg.pose.orientation.y = 1.0
         pose_msg.pose.orientation.z = 1.022529431793373e-06
@@ -87,7 +86,7 @@ def main(args=None):
         pose_msg.pose.position.x = 0.19201216101646423
         pose_msg.pose.position.y = -0.1277647763490677
         pose_msg.pose.position.z = 0.031097371131181717
-        manipulator.move_to_pose(pose_msg,tolerance=0.005)
+        manipulator.move_to_pose(pose_msg)
         gripper.close()
 
         pose_msg = PoseStamped()
