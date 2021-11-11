@@ -153,9 +153,13 @@ class MoveGroupInterface(Node):
 
         # 13. send goal
         if wait:
-            return self._action_client.send_goal(g)
+            ret = self._action_client.send_goal(g)
+            time.sleep(1)
+            return ret
         else:
-            return self._action_client.send_goal_async(g)
+            ret = self._action_client.send_goal_async(g)
+            time.sleep(1)
+            return ret
 
 
     ## @brief Move the arm, based on a goal pose_stamped for the end effector.
@@ -266,9 +270,13 @@ class MoveGroupInterface(Node):
 
         # 13. send goal
         if wait:
-            return self._action_client.send_goal(g)
+            ret = self._action_client.send_goal(g)
+            time.sleep(1)
+            return ret
         else:
-            return self._action_client.send_goal_async(g)
+            ret = self._action_client.send_goal_async(g)
+            time.sleep(1)
+            return ret
 
     ## @brief Sets the planner_id used for all future planning requests.
     ## @param planner_id The string for the planner id, set to None to clear
