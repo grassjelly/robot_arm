@@ -209,9 +209,6 @@ class RobotArmDriver(Node):
             self._joint_states_msg.header.stamp = self.get_clock().now().to_msg()
             self._joint_states_publisher.publish(self._joint_states_msg)
 
-        def _copy_states(self, state, new_state):
-            state_buff = list(state)
-
     @property
     def joints_command_subscriber(self):
         pass
