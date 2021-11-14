@@ -12,9 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import math
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
+from rclpy.duration import Duration
 from sensor_msgs.msg import Image, CameraInfo
 from robot_arm_perception.numpify.image import image_to_numpy
 from shapely.geometry import Polygon
@@ -24,6 +26,9 @@ from scipy.spatial.transform import Rotation as R
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import PoseArray, Pose, TransformStamped
 from sklearn import preprocessing
+from tf2_ros import TransformException
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
 
 
 class CameraCalibrator(Node):
@@ -71,6 +76,56 @@ class CameraCalibrator(Node):
 
         self._tf_broadcaster = TransformBroadcaster(self)
 
+        self._calibration_to_camera_recv = False
+        self._calibration_to_camera = TransformStamped()
+
+        self._tf_buffer = Buffer()
+        self._tf_listener = TransformListener(self._tf_buffer, self)
+        self._tf_timer = self.create_timer(0.01, self._tf_cb)
+
+        self._base_to_calibration = TransformStamped()
+        self._base_to_calibration.header.stamp = self.get_clock().now().to_msg()
+        self._base_to_calibration.header.frame_id = 'base_mount'
+        self._base_to_calibration.child_frame_id = 'calibration_link'
+        self._base_to_calibration.transform.translation.x = 0.0435
+        self._base_to_calibration.transform.translation.y = 0.0
+        self._base_to_calibration.transform.translation.z = 0.0
+        quat = self._quaternion_from_euler(0, 0, math.pi)
+        self._base_to_calibration.transform.rotation.x = quat[0]
+        self._base_to_calibration.transform.rotation.y = quat[1]
+        self._base_to_calibration.transform.rotation.z = quat[2]
+        self._base_to_calibration.transform.rotation.w = quat[3]
+
+        self._calibration_samples = 0
+        self.get_logger().info('Calibrating Camera!')
+
+    def _tf_cb(self):
+        if not self._calibration_to_camera_recv:
+            try:
+                now = rclpy.time.Time()
+                self._calibration_to_camera = self._tf_buffer.lookup_transform(
+                    'calibration_link',
+                    'camera_link',
+                    now
+                )
+                self._calibration_samples += 1
+  
+            except TransformException as ex:
+                return
+
+            if self._calibration_samples > 100:
+                self.get_logger().info('Camera Transform Ready!')
+                self.destroy_subscription(self._depth_sub)
+                self.destroy_subscription(self._image_sub)
+                self._calibration_to_camera_recv = True
+
+        else:
+            now = self.get_clock().now().to_msg()
+            self._base_to_calibration.header.stamp = now
+            self._calibration_to_camera.header.stamp = now
+            self._tf_broadcaster.sendTransform(self._base_to_calibration)
+            self._tf_broadcaster.sendTransform(self._calibration_to_camera)
+            
     def _init_aruco(self, dict_type):
         self._ar_dict = ar.Dictionary_get(ar.__getattribute__(dict_type))
         self._ar_params = ar.DetectorParameters_create()
@@ -143,7 +198,7 @@ class CameraCalibrator(Node):
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = 'camera_link'
-        t.child_frame_id = 'test'
+        t.child_frame_id = 'calibration_link'
 
         t.transform.translation.x = self._pos[0]
         t.transform.translation.y = self._pos[1]
@@ -222,12 +277,25 @@ class CameraCalibrator(Node):
             [x_axis[2], y_axis[2], z_axis[2]]
         ]).as_quat()
 
-        # rot = R.from_rotvec(np.array([0, -np.pi/2,  -np.pi/2])).as_quat()
-
-        # orientation = (quat * rot)
-        # orientation = normalize(orientation)
+        quat = normalize(quat)
 
         return center, quat
+
+    def _quaternion_from_euler(self, roll, pitch, yaw):
+        cy = math.cos(yaw * 0.5)
+        sy = math.sin(yaw * 0.5)
+        cp = math.cos(pitch * 0.5)
+        sp = math.sin(pitch * 0.5)
+        cr = math.cos(roll * 0.5)
+        sr = math.sin(roll * 0.5)
+
+        q = [0] * 4
+        q[0] = cy * cp * sr - sy * sp * cr
+        q[1] = sy * cp * sr + cy * sp * cr
+        q[2] = sy * cp * cr - cy * sp * sr
+        q[3] = cy * cp * cr + sy * sp * sr
+
+        return q
 
 def main(args=None):
     rclpy.init(args=args)
