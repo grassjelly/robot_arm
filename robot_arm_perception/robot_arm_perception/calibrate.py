@@ -40,6 +40,11 @@ class CameraCalibrator(Node):
         self._depth_img_rec = False
         self._depth_info_rec = False
 
+        self._pos = np.empty(3)
+        self._orientation = np.empty(4)
+        self._first_sample = True
+        self._beta = 0.98
+
         self._depth_info_sub = self.create_subscription(
             CameraInfo,
             depth_info_topic,
@@ -94,45 +99,66 @@ class CameraCalibrator(Node):
             return
 
         img_center = None
+        size_x = 0
+        size_y = 0
         for i, markers in enumerate(ar_ids):
             for ii, m_id in enumerate(markers):
                 if m_id == self._marker_id:
+                    corners_x = []
+                    corners_y = []
+                    for point in corners[i][ii]:
+                        corners_x.append(point[0])
+                        corners_y.append(point[1])
+                    size_x = max(corners_x) - min(corners_x)
+                    size_y = max(corners_y) - min(corners_y)
                     img_center = Polygon(corners[i][ii]).centroid
+
         if not img_center:
             return 
-
+        
         pos, orientation = self._pixel_to_pose(
             self._depth_image, 
             (round(img_center.x), round(img_center.y)), 
+            (size_x, size_y),
             self._depth_constant
         )
-
+        
         if pos is None or orientation is None:
             return
 
         if np.isnan(orientation).all():
             return
 
+        if not pos.any():
+            return
+
+        if self._first_sample:
+            self._pos = pos
+            self._orientation = orientation
+            self._first_sample = False
+        else:
+            self._pos = ((1 - self._beta) * pos) + (self._beta * self._pos)
+            self._orientation = ((1 - self._beta) * orientation) + (self._beta * self._orientation)
+
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = self._depth_frame_id
+        t.header.frame_id = 'camera_link'
         t.child_frame_id = 'test'
 
-        t.transform.translation.x = pos[0]
-        t.transform.translation.y = pos[1]
-        t.transform.translation.z = pos[2]
+        t.transform.translation.x = self._pos[0]
+        t.transform.translation.y = self._pos[1]
+        t.transform.translation.z = self._pos[2]
 
-        t.transform.rotation.x = orientation[0]
-        t.transform.rotation.y = orientation[1]
-        t.transform.rotation.z = orientation[2]
-        t.transform.rotation.w = orientation[3]
+        t.transform.rotation.x = self._orientation[0]
+        t.transform.rotation.y = self._orientation[1]
+        t.transform.rotation.z = self._orientation[2]
+        t.transform.rotation.w = self._orientation[3]
 
         self._tf_broadcaster.sendTransform(t)
 
-    def _pixel_to_pose(self, depth_image, pixel, depth_constant):
+    def _pixel_to_pose(self, depth_image, pixel, sample_size, depth_constant):
         def normalize(v):
-            norm = np.linalg.norm(v)
-            return v / norm
+            return v / np.linalg.norm(v)
 
         def get_depth(depth_image, pixel, depth_constant):
             depth_img_h, depth_img_w = depth_image.shape
@@ -147,46 +173,61 @@ class CameraCalibrator(Node):
 
             obj_x, obj_y = pixel
             depth = depth_image[obj_y][obj_x]
-            x = (obj_x - center_x) * depth * c_x
-            y = (obj_y - center_y) * depth * c_y
-            z = depth * unit_scaling
+
+            x = depth * unit_scaling
+            y = (center_x - obj_x) * depth * c_x
+            z = (center_y - obj_y) * depth * c_y
 
             return np.array([x, y, z])
         
+        depth_img_h, depth_img_w = depth_image.shape
+        sample_x, sample_y = sample_size
+        sample_x = int((sample_x / 2.0) * 0.5)
+        sample_y = int((sample_y / 2.0) * 0.5)
+
+        obj_x, obj_y = pixel
+
+        if obj_x > depth_img_w:
+            return None, None
+        if obj_y > depth_img_h:
+            return None, None
+
         center = get_depth(
             depth_image, 
             pixel, 
             depth_constant
         )
 
-        x_sample = get_depth(
+        y_axis = get_depth(
             depth_image,
-            (pixel[0] + 5, pixel[1]),
+            (obj_x - sample_x, obj_y),
             depth_constant
         )
 
-        y_sample = get_depth(
+        z_axis = get_depth(
             depth_image,
-            (pixel[0], pixel[1] - 5),
+            (obj_x, obj_y - sample_y),
             depth_constant
         )
 
-        x_vector = normalize(x_sample - center)
-        y_vector = normalize(y_sample - center)
-        z_vector = np.cross(x_vector, y_vector)
-        z_vector = normalize(z_vector)
+        z_axis = normalize(z_axis - center)
+        y_axis = normalize(y_axis - center)
+
+        x_axis = np.cross(y_axis, z_axis)
+        x_axis = normalize(x_axis)
+
         quat = R.from_matrix([
-            [x_vector[0], y_vector[0], z_vector[0]],
-            [x_vector[1], y_vector[1], z_vector[1]],
-            [x_vector[2], y_vector[2], z_vector[2]]
+            [x_axis[0], y_axis[0], z_axis[0]],
+            [x_axis[1], y_axis[1], z_axis[1]],
+            [x_axis[2], y_axis[2], z_axis[2]]
         ]).as_quat()
-        rot = R.from_rotvec(np.array([np.pi/2, np.pi/2, 0])).as_quat()
 
-        orientation = (quat * rot)
-        orientation = normalize(orientation)
-        
-        return center, orientation
+        # rot = R.from_rotvec(np.array([0, -np.pi/2,  -np.pi/2])).as_quat()
 
+        # orientation = (quat * rot)
+        # orientation = normalize(orientation)
+
+        return center, quat
 
 def main(args=None):
     rclpy.init(args=args)
