@@ -3,7 +3,7 @@
 <package format="3">
   <name>robot_arm_perception</name>
   <version>0.0.0</version>
-  <description>ROS2 Robot Arm Driver</description>
+  <description>ROS2 Robot Arm Perception Modules</description>
   <maintainer email="jimenojmm@gmail.com">juan</maintainer>
   <license>Apache2.0</license>
   <exec_depend>python3-numpy</exec_depend>
