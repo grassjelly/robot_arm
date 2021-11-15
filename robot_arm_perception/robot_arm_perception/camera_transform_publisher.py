@@ -31,24 +31,42 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 
 
-class CameraCalibrator(Node):
+class CameraTransformPublisher(Node):
     def __init__(self):
-        super().__init__('camera_calibrator')
-        dict_id = 'DICT_4X4_50'
-        image_topic = 'camera/color/image_raw'
-        depth_topic = 'camera/aligned_depth_to_color/image_raw'
-        depth_info_topic = 'camera/aligned_depth_to_color/camera_info'
-        marker_id = 1
+        super().__init__('camera_transform_publisher')
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('dict_id', 'DICT_4X4_50'),
+                ('image_topic', 'camera/color/image_raw'),
+                ('depth_topic', 'camera/aligned_depth_to_color/image_raw'),
+                ('depth_info_topic', 'camera/aligned_depth_to_color/camera_info'),
+                ('base_to_cal_pos', [0.0, 0.0, 0.0]),
+                ('base_to_cal_rot', [0.0, 0.0, 0.0]),
+                ('aruco_marker_id', 1),
+                ('base_frame_id', 'base_mount'),
+                ('camera_frame', 'camera_aligned_depth_to_color_frame'),
+                ('calibration_frame', 'calibration_link')
+            ]
+        )
 
-        self._marker_id = marker_id
+        dict_id =  self.get_parameter('dict_id').value
+        image_topic = self.get_parameter('image_topic').value
+        depth_topic = self.get_parameter('depth_topic').value
+        depth_info_topic = self.get_parameter('depth_info_topic').value
+        base_to_cal_pos = self.get_parameter('base_to_cal_pos').value
+        base_to_cal_rot = self.get_parameter('base_to_cal_rot').value
+        aruco_marker_id = self.get_parameter('aruco_marker_id').value
+        base_frame_id = self.get_parameter('base_frame_id').value
+        self._camera_frame =  self.get_parameter('camera_frame').value
+        self._calibration_frame =  self.get_parameter('calibration_frame').value
+
+        self._marker_id = aruco_marker_id
         self._init_aruco(dict_id)
         self._depth_img_rec = False
         self._depth_info_rec = False
 
-        self._pos = np.empty(3)
-        self._orientation = np.empty(4)
-        self._first_sample = True
-        self._beta = 0.98
+        self._weighted_filter = WeightedFilter(0.98)
 
         self._depth_info_sub = self.create_subscription(
             CameraInfo,
@@ -83,29 +101,45 @@ class CameraCalibrator(Node):
         self._tf_listener = TransformListener(self._tf_buffer, self)
         self._tf_timer = self.create_timer(0.01, self._tf_cb)
 
-        self._base_to_calibration = TransformStamped()
-        self._base_to_calibration.header.stamp = self.get_clock().now().to_msg()
-        self._base_to_calibration.header.frame_id = 'base_mount'
-        self._base_to_calibration.child_frame_id = 'calibration_link'
-        self._base_to_calibration.transform.translation.x = 0.0435
-        self._base_to_calibration.transform.translation.y = 0.0
-        self._base_to_calibration.transform.translation.z = 0.0
-        quat = self._quaternion_from_euler(0, 0, math.pi)
-        self._base_to_calibration.transform.rotation.x = quat[0]
-        self._base_to_calibration.transform.rotation.y = quat[1]
-        self._base_to_calibration.transform.rotation.z = quat[2]
-        self._base_to_calibration.transform.rotation.w = quat[3]
+        quat = self._quaternion_from_euler(
+            base_to_cal_rot[0], 
+            base_to_cal_rot[1], 
+            base_to_cal_rot[2]
+        )
+        self._base_to_calibration = self._fill_transform(
+            base_frame_id,
+            self._calibration_frame,
+            base_to_cal_pos,
+            quat
+        )
 
         self._calibration_samples = 0
         self.get_logger().info('Calibrating Camera!')
+
+    def _fill_transform(self, parent_frame, child_frame, pos, rot):
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = parent_frame
+        t.child_frame_id = child_frame
+
+        t.transform.translation.x = pos[0]
+        t.transform.translation.y = pos[1]
+        t.transform.translation.z = pos[2]
+
+        t.transform.rotation.x = rot[0]
+        t.transform.rotation.y = rot[1]
+        t.transform.rotation.z = rot[2]
+        t.transform.rotation.w = rot[3]
+        
+        return t
 
     def _tf_cb(self):
         if not self._calibration_to_camera_recv:
             try:
                 now = rclpy.time.Time()
                 self._calibration_to_camera = self._tf_buffer.lookup_transform(
-                    'calibration_link',
-                    'camera_link',
+                    self._calibration_frame,
+                    self._camera_frame,
                     now
                 )
                 self._calibration_samples += 1
@@ -115,14 +149,17 @@ class CameraCalibrator(Node):
 
             if self._calibration_samples > 100:
                 self.get_logger().info('Camera Transform Ready!')
+
                 self.destroy_subscription(self._depth_sub)
                 self.destroy_subscription(self._image_sub)
+
                 self._calibration_to_camera_recv = True
 
         else:
             now = self.get_clock().now().to_msg()
             self._base_to_calibration.header.stamp = now
             self._calibration_to_camera.header.stamp = now
+
             self._tf_broadcaster.sendTransform(self._base_to_calibration)
             self._tf_broadcaster.sendTransform(self._calibration_to_camera)
             
@@ -170,14 +207,14 @@ class CameraCalibrator(Node):
 
         if not img_center:
             return 
-        
+
         pos, orientation = self._pixel_to_pose(
             self._depth_image, 
-            (round(img_center.x), round(img_center.y)), 
+            (int(img_center.x), int(img_center.y)), 
             (size_x, size_y),
             self._depth_constant
         )
-        
+
         if pos is None or orientation is None:
             return
 
@@ -187,29 +224,16 @@ class CameraCalibrator(Node):
         if not pos.any():
             return
 
-        if self._first_sample:
-            self._pos = pos
-            self._orientation = orientation
-            self._first_sample = False
-        else:
-            self._pos = ((1 - self._beta) * pos) + (self._beta * self._pos)
-            self._orientation = ((1 - self._beta) * orientation) + (self._beta * self._orientation)
+        f_pos, f_orientation = self._weighted_filter.filter(pos, orientation)
 
-        t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = 'camera_link'
-        t.child_frame_id = 'calibration_link'
+        marker_transform = self._fill_transform(
+            self._camera_frame, 
+            self._calibration_frame, 
+            f_pos, 
+            f_orientation
+        )
 
-        t.transform.translation.x = self._pos[0]
-        t.transform.translation.y = self._pos[1]
-        t.transform.translation.z = self._pos[2]
-
-        t.transform.rotation.x = self._orientation[0]
-        t.transform.rotation.y = self._orientation[1]
-        t.transform.rotation.z = self._orientation[2]
-        t.transform.rotation.w = self._orientation[3]
-
-        self._tf_broadcaster.sendTransform(t)
+        self._tf_broadcaster.sendTransform(marker_transform)
 
     def _pixel_to_pose(self, depth_image, pixel, sample_size, depth_constant):
         def normalize(v):
@@ -297,13 +321,35 @@ class CameraCalibrator(Node):
 
         return q
 
+
+class WeightedFilter:
+    def __init__(self, beta):
+        self._beta = beta
+        self._pos = np.empty(3)
+        self._orientation = np.empty(4)
+        self._first_sample = True
+
+    def filter(self, pos, orientation):
+        if self._first_sample:
+            self._pos = pos
+            self._orientation = orientation
+            self._first_sample = False
+
+        else:
+            self._pos = ((1 - self._beta) * pos) + (self._beta * self._pos)
+            self._orientation = ((1 - self._beta) * orientation) + (self._beta * self._orientation)
+
+        return self._pos, self._orientation
+
+
 def main(args=None):
     rclpy.init(args=args)
-    calibrator = CameraCalibrator()
-    rclpy.spin(calibrator)
+    ctp = CameraTransformPublisher()
+    rclpy.spin(ctp)
     calibrator.destroy_node()
     rclpy.shutdown()
 
 
 if __name__ == '__main__':
     main()
+

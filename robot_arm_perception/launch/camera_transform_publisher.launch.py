@@ -11,17 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+
+    publisher_config = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_perception'), 'config', 'camera_transform_publisher.yaml']
+    )
+
     return LaunchDescription([
         Node(
             package='robot_arm_perception',
-            executable='calibrate',
-            name='camera_calibrator',
-            output='screen'
-        ),
+            executable='camera_transform_publisher',
+            name='camera_transform_publisher',
+            output='screen',
+            parameters=[publisher_config]
+        )
     ])

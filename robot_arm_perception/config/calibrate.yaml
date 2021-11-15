@@ -1,7 +1,0 @@
-robot_arm_perception:
-  ros__parameters:
-    image_topic: 'camera/color/image_raw'
-    depth_topic: 'camera/aligned_depth_to_color/image_raw'
-    depth_info_topic: 'camera/aligned_depth_to_color/camera_info'
-    aruco_marker_id: 1
-    aructo_dict_type: 'DICT_4X4_50'

@@ -1,0 +1,11 @@
+camera_transform_publisher:
+  ros__parameters:
+    dict_id: 'DICT_4X4_50'
+    image_topic: 'camera/color/image_raw'
+    depth_topic: 'camera/aligned_depth_to_color/image_raw'
+    depth_info_topic: 'camera/aligned_depth_to_color/camera_info'
+    base_to_cal_pos: [0.0435, 0.0, 0.0]
+    base_to_cal_rot: [0.0, 0.0, 3.1416]
+    aruco_marker_id: 1
+    base_frame_id: 'base_mount'
+    camera_frame: 'camera_aligned_depth_to_color_frame'
