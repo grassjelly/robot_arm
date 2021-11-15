@@ -5,8 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /MotionPlanning1
+        - /TF1
       Splitter Ratio: 0.7425600290298462
-    Tree Height: 395
+    Tree Height: 348
   - Class: rviz_common/Help
     Name: Help
   - Class: rviz_common/Views
@@ -107,6 +108,10 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          tool_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
           wrist0_link:
             Alpha: 1
             Show Axes: false
@@ -206,6 +211,10 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          tool_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
           wrist0_link:
             Alpha: 1
             Show Axes: false
@@ -275,6 +284,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        tool_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         wrist0_link:
           Alpha: 1
           Show Axes: false
@@ -302,6 +315,76 @@ Visualization Manager:
       Trail Step Size: 1
       Trajectory Topic: /display_planned_path
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_link:
+          Value: false
+        base_mount:
+          Value: false
+        calibration_link:
+          Value: true
+        camera_aligned_depth_to_color_frame:
+          Value: true
+        camera_color_frame:
+          Value: false
+        camera_color_optical_frame:
+          Value: false
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
+        elbow_link:
+          Value: false
+        finger_link:
+          Value: false
+        gripper_link:
+          Value: false
+        mimic_finger_link:
+          Value: false
+        pan_link:
+          Value: false
+        shoulder_link:
+          Value: false
+        tool_link:
+          Value: false
+        wrist0_link:
+          Value: false
+        wrist1_link:
+          Value: false
+        wrist2_link:
+          Value: false
+      Marker Scale: 0.5
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        base_mount:
+          base_link:
+            pan_link:
+              shoulder_link:
+                elbow_link:
+                  wrist0_link:
+                    wrist1_link:
+                      wrist2_link:
+                        gripper_link:
+                          finger_link:
+                            {}
+                          mimic_finger_link:
+                            {}
+                        tool_link:
+                          {}
+          calibration_link:
+            camera_aligned_depth_to_color_frame:
+              camera_color_optical_frame:
+                {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -320,7 +403,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/XYOrbit
-      Distance: 2.5615234375
+      Distance: 2.7038373947143555
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -335,10 +418,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5697969794273376
+      Pitch: 0.11979708820581436
       Target Frame: base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.364950656890869
+      Yaw: 6.279969215393066
     Saved: ~
 Window Geometry:
   Displays:
@@ -352,7 +435,7 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002a200000416fc0200000008fb000000100044006900730070006c006100790073010000003d0000021c000000c900fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a0056006900650077007300000003b0000000b0000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004100fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067010000025f000001f40000018800fffffffb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004100ffffff000004a80000041600000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002a200000416fc0200000008fb000000100044006900730070006c006100790073010000003d000001ed000000c900fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a0056006900650077007300000003b0000000b0000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004100fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000230000002230000017d00fffffffb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004100ffffff000004a80000041600000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Trajectory - Trajectory Slider:
     collapsed: false
   Views:
