@@ -23,7 +23,9 @@ setup(
     license='Apache 2.0',
     entry_points={
         'console_scripts': [
-            'camera_transform_publisher = robot_arm_perception.camera_transform_publisher:main'
+            'camera_transform_publisher = robot_arm_perception.camera_transform_publisher:main',
+            'object_finder = robot_arm_perception.object_finder:main'
+
         ],
     },
 )
