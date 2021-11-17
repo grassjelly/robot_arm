@@ -1,8 +1,5 @@
-        
-
-
-<sdf version="1.6">
-  <world name="empty">
+<sdf version="1.7">
+  <world name="data_collection">
     <physics name="1ms" type="ignored">
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1.0</real_time_factor>
@@ -149,7 +146,7 @@
             </visual>
         </link>
     </model>
-    <!-- <model name="segmentation_model">
+    <model name="segmentation_model">
         <pose>4 0 1.0 0 0.0 3.14</pose>
         <link name="link">
             <pose>0.05 0.05 0.05 0 0 0</pose>
@@ -194,6 +191,6 @@
                 <visualize>true</visualize>
             </sensor>
         </link>
-    </model> -->
+    </model>
   </world>
 </sdf>
