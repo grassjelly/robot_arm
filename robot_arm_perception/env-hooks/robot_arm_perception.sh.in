@@ -1,1 +1,0 @@
-ament_prepend_unique_value IGN_GAZEBO_RESOURCE_PATH "$COLCON_CURRENT_PREFIX/share/robot_arm_perception/dataset/synthetic/models"
