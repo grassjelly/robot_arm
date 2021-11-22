@@ -24,8 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'camera_transform_publisher = robot_arm_perception.camera_transform_publisher:main',
-            'object_finder = robot_arm_perception.object_finder:main'
-
+            'object_finder_server = robot_arm_perception.object_finder_server:main'
         ],
     },
 )
