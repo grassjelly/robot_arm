@@ -24,7 +24,8 @@ import cv2
 import math
 import copy
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString, Point
+from shapely.ops import nearest_points
 
 class ObjectFinderServer(Node):
     def __init__(self):
@@ -104,15 +105,15 @@ class ObjectFinderServer(Node):
         cropped = np.full(gray.shape[:2], 255, dtype=np.uint8)
         cropped[min_y:max_y, min_x:max_x] = gray[min_y:max_y, min_x:max_x]
 
-        thresholded = cv2.threshold(cropped.copy(), thresh, 255, cv2.THRESH_BINARY)[1]
-        thresholded = cv2.erode(thresholded, None, iterations=2)
-        thresholded = cv2.dilate(thresholded, None, iterations=2)
+        thresholded = cv2.threshold(cropped, thresh, 255, cv2.THRESH_BINARY)[1]
+        thresholded = cv2.erode(thresholded, None, iterations=1)
+        thresholded = cv2.dilate(thresholded, None, iterations=1)
 
         canny = cv2.Canny(thresholded, 10, 250)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
         filled = cv2.morphologyEx(canny, cv2.MORPH_CLOSE, kernel)
 
-        contours, _ = cv2.findContours(filled.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(filled, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         total = 0
         for c in contours:
             peri = cv2.arcLength(c, True)
@@ -121,6 +122,7 @@ class ObjectFinderServer(Node):
             points = []
             points_x = []
             points_y = []
+
             if len(approx) >= 4:
                 total += 1
                 for vertex in approx:
@@ -136,20 +138,51 @@ class ObjectFinderServer(Node):
 
             if obj.area < 500:
                 continue
-            
-            m_x, m_y, mx_x, mx_y = obj.bounds
 
-            cv2.circle(img, (int(m_x), int(m_y)),  8, (0, 255, 0), -1)
-            cv2.circle(img, (int(mx_x), int(mx_y)),  8, (0, 255, 0), -1)
+            nearest_points = self._find_nearest_point(points, [obj_c.x, obj_c.y])
+
+            cv2.circle(img, (int(nearest_points[0][0]), int(nearest_points[0][1])), 8, (0, 255, 0), -1)
+            cv2.circle(img, (int(nearest_points[1][0]), int(nearest_points[1][1])), 8, (0, 255, 0), -1)
+
             cv2.circle(img, (int(obj_c.x), int(obj_c.y)), 10, (255, 255, 255), -1)
             cv2.circle(img, (int(obj_c.x), int(obj_c.y)),  8, (255,   0,   0), -1)
 
         cv2.rectangle(img, top_left, bottom_right, (0,255,0), 1)
         img_msg = msgify(Image, img, encoding='rgb8')
+        # img_msg = msgify(Image, thresholded, encoding='mono8')
 
         img_msg.header.frame_id = msg.header.frame_id
         self._img_debug_pub.publish(img_msg)
 
+
+    def _find_nearest_point(self, vertices, center):
+        line_centers = []
+        object_poly = vertices[:]
+        object_poly.append(vertices[0])
+        center_point = Point(center[0],center[1])
+        distances = []
+
+        #iterate every line segment in the polynomial
+        for i in range(1, len(object_poly)):
+            #create a line
+            l = LineString([
+                Point(object_poly[i-1][0], object_poly[i-1][1]),
+                Point(object_poly[i][0], object_poly[i][1])
+            ])
+            #calculate shortest distance from the line to the centroid
+            distances.append(center_point.distance(l))
+
+            #get the point within the line that defines the shortest distance
+            line_centers.append(nearest_points(l, center_point)[0])
+
+        #pick the two shortest points
+        shortest = np.argsort(np.array(distances))[:2]
+        return [
+            [line_centers[shortest[0]].x, line_centers[shortest[0]].y], 
+            [line_centers[shortest[1]].x, line_centers[shortest[1]].y]
+        ]
+
+        
 def main(args=None):
     rclpy.init(args=args)
     ofs = ObjectFinderServer()
