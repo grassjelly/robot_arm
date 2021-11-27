@@ -181,7 +181,7 @@
   <joint name="gripper_joint" type="fixed">
     <parent link="wrist2_link"/>
     <child link="gripper_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0 0.10893"/>
+    <origin rpy="0 0 0" xyz="0.002784 0 0.1547"/>
   </joint>
 
   <link name="finger_link">
@@ -204,7 +204,7 @@
     <limit lower="0" upper="0.026" effort="1.0" velocity="0" />
     <parent link="gripper_link"/>
     <child link="finger_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
 
   <link name="mimic_finger_link">
@@ -233,9 +233,9 @@
 
   <link name="tool_link" />
   <joint name="tool_joint" type="fixed">
-    <parent link="wrist2_link"/>
+    <parent link="gripper_link"/>
     <child link="tool_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0 0.10393"/>
+    <origin rpy="0 -3.1416 0" xyz="0 0 -0.005"/>
   </joint>
 
   <ros2_control name="robot_arm" type="system">
