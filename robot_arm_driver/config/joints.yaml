@@ -104,12 +104,12 @@ robot_arm_driver:
         invert: False
         min_pos: 0.0
         max_pos: 0.042
-        horn_radius: 0.014
+        horn_radius: 0.017
         angle_resolution: 0.0879 #degrees
         step_per_sec: 50
         speed: 0.5 
         acceleration: 2
-        torque: 3
+        torque: 4
         max_torque: 40
         acceleration: 2
         offset: 0.0
