@@ -4,8 +4,10 @@ camera_transform_publisher:
     image_topic: 'camera/color/image_raw'
     depth_topic: 'camera/aligned_depth_to_color/image_raw'
     depth_info_topic: 'camera/aligned_depth_to_color/camera_info'
-    base_to_cal_pos: [0.0435, 0.0, 0.0]
-    base_to_cal_rot: [0.0, 0.0, 3.1416]
+    base_to_cal_pos: [0.29975, -0.25, 0.0]
+    # base_to_cal_pos: [0.0, -0.0, 0.0]
+
+    base_to_cal_rot: [0.0, 1.5708, 3.1416]
     aruco_marker_id: 1
     base_frame_id: 'base_mount'
     camera_frame: 'camera_aligned_depth_to_color_frame'
