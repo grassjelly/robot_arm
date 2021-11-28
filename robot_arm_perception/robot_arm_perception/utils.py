@@ -5,29 +5,34 @@ import numpy as np
 from shapely.geometry import Polygon
 
 
+def get_depth(depth_image, pixel, depth_constant):
+    depth_img_h, depth_img_w = depth_image.shape
+    obj_x, obj_y = pixel
+
+    if obj_x >= depth_img_w or obj_y >= depth_img_h:
+        return None
+
+    unit_scaling = 0.001
+    center_x = round(depth_img_w / 2.0) 
+    center_y = round(depth_img_h / 2.0)
+
+    fx = 1.0 / float(depth_constant)
+    fy = 1.0 / float(depth_constant)
+    c_x = unit_scaling / fx
+    c_y = unit_scaling / fy
+
+    depth = depth_image[obj_y][obj_x]
+
+    x = depth * unit_scaling
+    y = (center_x - obj_x) * depth * c_x
+    z = (center_y - obj_y) * depth * c_y
+
+    return np.array([x, y, z])
+
+
 def pixel_to_pose(depth_image, pixel, sample_size, depth_constant):
     def normalize(v):
         return v / np.linalg.norm(v)
-
-    def get_depth(depth_image, pixel, depth_constant):
-        depth_img_h, depth_img_w = depth_image.shape
-        unit_scaling = 0.001
-        center_x = round(depth_img_w / 2.0) 
-        center_y = round(depth_img_h / 2.0)
-
-        fx = 1.0 / float(depth_constant)
-        fy = 1.0 / float(depth_constant)
-        c_x = unit_scaling / fx
-        c_y = unit_scaling / fy
-
-        obj_x, obj_y = pixel
-        depth = depth_image[obj_y][obj_x]
-
-        x = depth * unit_scaling
-        y = (center_x - obj_x) * depth * c_x
-        z = (center_y - obj_y) * depth * c_y
-
-        return np.array([x, y, z])
     
     depth_img_h, depth_img_w = depth_image.shape
     sample_x, sample_y = sample_size
@@ -36,9 +41,9 @@ def pixel_to_pose(depth_image, pixel, sample_size, depth_constant):
 
     obj_x, obj_y = pixel
 
-    if obj_x > depth_img_w:
+    if obj_x >= depth_img_w:
         return None, None
-    if obj_y > depth_img_h:
+    if obj_y >= depth_img_h:
         return None, None
 
     center = get_depth(
@@ -106,14 +111,16 @@ class WeightedFilter:
         self._first_sample = True
 
     def filter(self, pos, orientation):
+        pos = np.array(pos)
+        orientation = np.array(orientation)
         if self._first_sample:
             self._pos = pos
             self._orientation = orientation
             self._first_sample = False
 
         else:
-            self._pos = ((1 - self._beta) * pos) + (self._beta * self._pos)
-            self._orientation = ((1 - self._beta) * orientation) + (self._beta * self._orientation)
+            self._pos = ((1.0 - self._beta) * pos) + (self._beta * self._pos)
+            self._orientation = ((1.0 - self._beta) * orientation) + (self._beta * self._orientation)
 
         return self._pos, self._orientation
 
