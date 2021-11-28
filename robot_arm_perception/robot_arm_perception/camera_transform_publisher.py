@@ -191,7 +191,8 @@ class CameraTransformPublisher(Node):
         if pos is None or orientation is None:
             return
 
-        f_pos, f_orientation = self._weighted_filter.filter(pos, orientation)
+        hard_orient = quaternion_from_euler(0.0, 0, 0)
+        f_pos, f_orientation = self._weighted_filter.filter(pos, hard_orient)
 
         marker_transform = self._fill_transform(
             self._camera_frame, 
