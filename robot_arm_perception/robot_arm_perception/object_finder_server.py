@@ -161,7 +161,7 @@ class ObjectFinderServer(Node):
 
         top_left = (700, 190)
         bottom_right = (1010, 530)
-        thresh = 160
+        thresh = 130
 
         img = image_to_numpy(msg)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -186,60 +186,60 @@ class ObjectFinderServer(Node):
 
         depth_image = copy.deepcopy(self._depth_image)
         for obj_id, c in enumerate(contours):
+
+            #approximate the shape of the contours detected
             peri = cv2.arcLength(c, True)
             approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-
-            depth_points = []
-            viz_points = []
-            object_depth = 0
+            
+            #get the corners of the shape
+            corners = []
             if len(approx) >= 4:
                 total += 1
-                for vertex in approx:
-                    vertex_xyz = get_depth(
-                        depth_image, 
-                        vertex[0], 
-                        self._depth_constant
-                    )
+                for corner in approx:
+                    corners.append(corner[0])
 
-                    if vertex_xyz is None:
-                        continue
-
-                    depth_points.append([vertex_xyz[0], vertex_xyz[1]])
-                    viz_points.append(vertex[0])
-
-                    object_depth += vertex_xyz[2]
- 
-            if len(depth_points) < 3:
+            if len(corners) < 3:
                 continue
 
-            depth_obj = Polygon(depth_points)
-            depth_center = depth_obj.centroid
+            #create a shapely object for easier geometric operations
+            obj = Polygon(corners)
+            obj_center = [int(obj.centroid.x), int(obj.centroid.y)]
 
-            img_obj = Polygon(viz_points)
-            img_obj_c = img_obj.centroid
-
-            if img_obj.area < 500:
+            if obj.area < 500:
                 continue
-      
-            object_depth /= float(len(depth_points))
-            nearest_points = self._find_nearest_point(depth_points, [depth_center.x, depth_center.y])
 
-            nearest_points_viz = self._find_nearest_point(viz_points, [img_obj_c.x, img_obj_c.y])
-            cv2.circle(img, (int(nearest_points_viz[0][0]), int(nearest_points_viz[0][1])), 8, (0, 255, 0), -1)
-            cv2.circle(img, (int(nearest_points_viz[1][0]), int(nearest_points_viz[1][1])), 8, (0, 255, 0), -1)
+            #get the position of object in 3D using the RGBD image
+            obj_depth = get_depth(
+                depth_image, 
+                obj_center, 
+                self._depth_constant
+            )
 
-            cv2.circle(img, (int(img_obj_c.x), int(img_obj_c.y)), 10, (255, 255, 255), -1)
-            cv2.circle(img, (int(img_obj_c.x), int(img_obj_c.y)),  8, (255,   0,   0), -1)
+            if obj_depth is None:
+                continue
 
-            x, y, z = transform_point(self._camera_trans_rot, [depth_center.x, depth_center.y, object_depth])
+            #the obj depth's reference frame is from the camera
+            #now we transform it to the robot's base
+            x, y, z = transform_point(self._camera_trans_rot, obj_depth)
 
+            #just ignore noisy readings that says the object is below the base
             if z < 0:
                 continue
 
-            d_n_points_x = nearest_points_viz[0][0] - nearest_points_viz[1][0]
-            d_n_points_y = nearest_points_viz[0][1] - nearest_points_viz[1][1]
-            r = math.atan2(d_n_points_y, d_n_points_x)
-            r_quat = quaternion_from_euler(0,0,r)
+            #from the detected corners find, the nearest point to the centroid
+            nearest_points = self._find_nearest_point(corners, obj_center)
+
+            #get the distance from centroid to the nearest point
+            d_n_points_x = nearest_points[0][0] - obj_center[0]
+            d_n_points_y = nearest_points[0][1] - obj_center[1]
+
+            #using the delta we can calculate the angle of the object
+            r = math.atan2(d_n_points_x, d_n_points_y)
+
+            #using that angle we can get the gripping angle
+            #just add half a pi so that the opening of the gripper is perpindicular
+            #to the centroid->nearest_point vector
+            r_quat = quaternion_from_euler(0, 0, r + 1.5708)
 
             object_transform = self._fill_transform(
                 self._base_frame, 
@@ -249,6 +249,11 @@ class ObjectFinderServer(Node):
             )
 
             self._tf_broadcaster.sendTransform(object_transform)
+
+            cv2.circle(img, (int(nearest_points[0][0]), int(nearest_points[0][1])), 8, (0, 255, 0), -1)
+            cv2.circle(img, (int(nearest_points[1][0]), int(nearest_points[1][1])), 8, (0, 255, 0), -1)
+            cv2.circle(img, obj_center, 10, (255, 255, 255), -1)
+            cv2.circle(img, obj_center,  8, (255,   0,   0), -1)
 
         # plt.imshow(img)
         # plt.show()
@@ -284,6 +289,7 @@ class ObjectFinderServer(Node):
 
         #pick the two shortest points
         shortest = np.argsort(np.array(distances))[:2]
+
         return [
             [line_centers[shortest[0]].x, line_centers[shortest[0]].y], 
             [line_centers[shortest[1]].x, line_centers[shortest[1]].y]
