@@ -57,13 +57,13 @@ def pixel_to_pose(depth_image, pixel, sample_size, depth_constant):
 
     y_axis = get_depth(
         depth_image,
-        (obj_x - sample_x, obj_y),
+        (sample_x - obj_x, obj_y),
         depth_constant
     )
 
     z_axis = get_depth(
         depth_image,
-        (obj_x, obj_y - sample_y),
+        (obj_x, sample_y - obj_y),
         depth_constant
     )
 
