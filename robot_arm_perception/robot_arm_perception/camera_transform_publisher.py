@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
@@ -38,7 +39,7 @@ class CameraTransformPublisher(Node):
                 ('base_to_cal_pos', [0.0, 0.0, 0.0]),
                 ('base_to_cal_rot', [0.0, 0.0, 0.0]),
                 ('aruco_marker_id', 1),
-                ('base_frame_id', 'base_mount'),
+                ('base_frame', 'base_mount'),
                 ('camera_frame', 'camera_aligned_depth_to_color_frame'),
                 ('calibration_frame', 'calibration_link')
             ]
@@ -51,9 +52,10 @@ class CameraTransformPublisher(Node):
         base_to_cal_pos = self.get_parameter('base_to_cal_pos').value
         base_to_cal_rot = self.get_parameter('base_to_cal_rot').value
         aruco_marker_id = self.get_parameter('aruco_marker_id').value
-        base_frame_id = self.get_parameter('base_frame_id').value
+        base_frame = self.get_parameter('base_frame').value
         self._camera_frame =  self.get_parameter('camera_frame').value
         self._calibration_frame =  self.get_parameter('calibration_frame').value
+        self._depth_frame = ''
 
         self._marker_id = aruco_marker_id
         self._depth_img_rec = False
@@ -90,6 +92,7 @@ class CameraTransformPublisher(Node):
 
         self._calibration_to_camera_recv = False
         self._calibration_to_camera = TransformStamped()
+        self._depth_to_camera = TransformStamped()
 
         self._tf_buffer = Buffer()
         self._tf_listener = TransformListener(self._tf_buffer, self)
@@ -101,7 +104,7 @@ class CameraTransformPublisher(Node):
             base_to_cal_rot[2]
         )
         self._base_to_calibration = self._fill_transform(
-            base_frame_id,
+            base_frame,
             self._calibration_frame,
             base_to_cal_pos,
             quat
@@ -133,7 +136,7 @@ class CameraTransformPublisher(Node):
                 now = rclpy.time.Time()
                 self._calibration_to_camera = self._tf_buffer.lookup_transform(
                     self._calibration_frame,
-                    self._camera_frame,
+                    self._depth_frame,
                     now
                 )
                 self._calibration_samples += 1
@@ -164,7 +167,8 @@ class CameraTransformPublisher(Node):
     def _depth_info_cb(self, msg):
         self._depth_info_rec = True
         self._depth_constant = 1.0 / msg.k[4]
-        self._depth_frame_id = msg.header.frame_id
+        self._depth_frame = msg.header.frame_id
+        self.get_logger().info(self._depth_frame)
         self.destroy_subscription(self._depth_info_sub)
 
     def _image_cb(self, msg):
@@ -185,7 +189,9 @@ class CameraTransformPublisher(Node):
             self._depth_image, 
             object_center, 
             object_size,
-            self._depth_constant
+            self._depth_constant,
+            transform=False,
+            same_depth=True
         )
 
         if pos is None or orientation is None:
@@ -193,9 +199,8 @@ class CameraTransformPublisher(Node):
 
         # hard_orient = quaternion_from_euler(0.0, 0, 0)
         f_pos, f_orientation = self._weighted_filter.filter(pos, orientation)
-
         marker_transform = self._fill_transform(
-            self._camera_frame, 
+            self._depth_frame, 
             self._calibration_frame, 
             f_pos, 
             f_orientation

@@ -46,7 +46,6 @@ class ObjectFinderServer(Node):
                 ('depth_topic', 'camera/aligned_depth_to_color/image_raw'),
                 ('depth_info_topic', 'camera/aligned_depth_to_color/camera_info'),
                 ('base_frame_id', 'base_mount'),
-                ('camera_frame', 'camera_aligned_depth_to_color_frame'),
             ]
         )
 
@@ -55,10 +54,10 @@ class ObjectFinderServer(Node):
         depth_info_topic = self.get_parameter('depth_info_topic').value
   
         self._base_frame = self.get_parameter('base_frame_id').value
-        self._camera_frame =  self.get_parameter('camera_frame').value
 
         self._depth_img_rec = False
         self._depth_info_rec = False
+        self._camera_tf_rec = False
 
         self._tf_buffer = Buffer()
         self._tf_listener = TransformListener(self._tf_buffer, self)
@@ -66,7 +65,6 @@ class ObjectFinderServer(Node):
 
         self._camera_transform = TransformStamped()
         self._camera_trans_rot = None
-        self._wait_for_transform()
 
         self._depth_info_sub = self.create_subscription(
             CameraInfo,
@@ -93,6 +91,7 @@ class ObjectFinderServer(Node):
         self._image_sub
 
         self._img_debug_pub = self.create_publisher(Image, 'img_debug', 10)
+        self._wait_for_transform()
 
     def _fill_transform(self, parent_frame, child_frame, pos, rot):
         t = TransformStamped()
@@ -112,15 +111,18 @@ class ObjectFinderServer(Node):
         return t
 
     def _wait_for_transform(self):
-        t_received = False
-        self.get_logger().info(f'Waiting for camera transform from \'{self._base_frame}\' to \'{self._camera_frame}\'')
+        while not self._camera_tf_rec:
+            if not self._depth_info_rec:
+                rclpy.spin_once(self, timeout_sec=1.0)
+                continue
+            
+            self.get_logger().info(f'Waiting for camera transform from \'{self._base_frame}\' to \'{self._depth_frame}\'')
 
-        while not t_received:
             try:
                 now = rclpy.time.Time()
                 self._camera_transform = self._tf_buffer.lookup_transform(
                     self._base_frame,
-                    self._camera_frame,
+                    self._depth_frame,
                     now
                 )
 
@@ -137,7 +139,7 @@ class ObjectFinderServer(Node):
                 ]
 
                 self._camera_trans_rot = (trans, quat)
-                t_received = True
+                self._camera_tf_rec = True
                 self.get_logger().info('Camera Transform Received!')
                 return
 
@@ -153,10 +155,10 @@ class ObjectFinderServer(Node):
     def _depth_info_cb(self, msg):
         self._depth_info_rec = True
         self._depth_constant = 1.0 / msg.k[4]
-        self._depth_frame_id = msg.header.frame_id
+        self._depth_frame = msg.header.frame_id
 
     def _image_cb(self, msg):
-        if not self._depth_img_rec or not self._depth_info_rec:
+        if not self._depth_img_rec or not self._depth_info_rec or not self._camera_tf_rec:
             return
 
         top_left = (700, 190)
