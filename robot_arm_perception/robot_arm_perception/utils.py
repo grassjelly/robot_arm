@@ -5,7 +5,7 @@ import numpy as np
 from shapely.geometry import Polygon
 
 
-def get_depth(depth_image, pixel, depth_constant):
+def get_depth(depth_image, pixel, depth_constant, transform=False):
     depth_img_h, depth_img_w = depth_image.shape
     obj_x, obj_y = pixel
 
@@ -23,21 +23,28 @@ def get_depth(depth_image, pixel, depth_constant):
 
     depth = depth_image[obj_y][obj_x]
 
-    x = depth * unit_scaling
-    y = (center_x - obj_x) * depth * c_x
-    z = (center_y - obj_y) * depth * c_y
+    if transform:
+        x = depth * unit_scaling
+        y = (center_x - obj_x) * depth * c_x
+        z = (center_y - obj_y) * depth * c_y
 
-    return np.array([x, y, z])
+        return np.array([x, y ,z])
 
+    else:
+        x = (obj_x - center_x) * depth * c_x
+        y = (obj_y - center_y) * depth * c_y
+        z = depth * unit_scaling
 
-def pixel_to_pose(depth_image, pixel, sample_size, depth_constant):
+        return np.array([x, y, z])
+
+def pixel_to_pose(depth_image, pixel, sample_size, depth_constant, transform=False, same_depth=False):
     def normalize(v):
         return v / np.linalg.norm(v)
     
     depth_img_h, depth_img_w = depth_image.shape
     sample_x, sample_y = sample_size
-    sample_x = int((sample_x / 2.0) * 0.5)
-    sample_y = int((sample_y / 2.0) * 0.5)
+    sample_x = int(sample_x * 0.3)
+    sample_y = int(sample_y * 0.3)
 
     obj_x, obj_y = pixel
 
@@ -49,30 +56,70 @@ def pixel_to_pose(depth_image, pixel, sample_size, depth_constant):
     center = get_depth(
         depth_image, 
         pixel, 
-        depth_constant
+        depth_constant,
+        transform=transform
     )
-    
     if center is None or not center.any():     
         return None, None
 
-    y_axis = get_depth(
-        depth_image,
-        (sample_x - obj_x, obj_y),
-        depth_constant
-    )
+    if transform:
+        y_axis = get_depth(
+            depth_image,
+            (obj_x - sample_x , obj_y),
+            depth_constant,
+            transform=transform
+        )
+        if y_axis is None or not y_axis.any():     
+            return None, None
+        if same_depth:
+            y_axis[0] = center[0]
+        
 
-    z_axis = get_depth(
-        depth_image,
-        (obj_x, sample_y - obj_y),
-        depth_constant
-    )
+        z_axis = get_depth(
+            depth_image,
+            (obj_x, obj_y - sample_y),
+            depth_constant,
+            transform=transform
+        )
+        if z_axis is None or not z_axis.any():     
+            return None, None
+        if same_depth:
+            z_axis[0] = center[0]
 
-    z_axis = normalize(z_axis - center)
-    y_axis = normalize(y_axis - center)
+        z_axis = normalize(z_axis - center)
+        y_axis = normalize(y_axis - center )
 
-    x_axis = np.cross(y_axis, z_axis)
-    x_axis = normalize(x_axis)
+        x_axis = np.cross(y_axis, z_axis)
+        x_axis = normalize(x_axis)
 
+    else:
+        x_axis = get_depth(
+            depth_image,
+            (obj_x + sample_x, obj_y),
+            depth_constant,
+        )
+        if x_axis is None or not x_axis.any():     
+            return None, None
+        if same_depth:
+            x_axis[2] = center[2]
+
+
+        y_axis = get_depth(
+            depth_image,
+            (obj_x, obj_y + sample_y),
+            depth_constant,
+        )
+        if y_axis is None or not y_axis.any():     
+            return None, None
+        if same_depth:
+            y_axis[2] = center[2]
+
+        x_axis = normalize(x_axis - center)
+        y_axis = normalize(y_axis - center)
+
+        z_axis = np.cross(x_axis, y_axis)
+        z_axis = normalize(z_axis)
+    
     quat = R.from_matrix([
         [x_axis[0], y_axis[0], z_axis[0]],
         [x_axis[1], y_axis[1], z_axis[1]],
@@ -80,7 +127,7 @@ def pixel_to_pose(depth_image, pixel, sample_size, depth_constant):
     ]).as_quat()
 
     quat = normalize(quat)
-
+    
     if np.isnan(quat).all():
         return None, None
     else:
