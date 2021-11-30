@@ -10,6 +10,7 @@
   <exec_depend>python3-shapely</exec_depend>
   <exec_depend>perception-pcl</exec_depend>
   <exec_depend>sensor-msgs-py</exec_depend>
+  <exec_depend>robot_arm_msgs</exec_depend>
   <export>
     <build_type>ament_python</build_type>
   </export>

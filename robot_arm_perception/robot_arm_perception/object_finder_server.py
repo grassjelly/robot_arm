@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import time
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
+from rclpy.action import ActionServer
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Pose, PoseArray
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros import TransformException
@@ -26,6 +26,8 @@ from tf2_ros import TransformBroadcaster
 from robot_arm_perception.numpify.image import image_to_numpy
 from robot_arm_perception.numpify.registry import msgify
 from robot_arm_perception.utils import get_depth, quaternion_from_euler
+from robot_arm_perception.geometry import transform_point
+from robot_arm_msgs.srv import GripperPose
 
 import numpy as np
 import cv2
@@ -34,7 +36,6 @@ import copy
 import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, LineString, Point
 from shapely.ops import nearest_points
-from robot_arm_perception.geometry import transform_point
 
 class ObjectFinderServer(Node):
     def __init__(self):
@@ -63,7 +64,6 @@ class ObjectFinderServer(Node):
         self._tf_listener = TransformListener(self._tf_buffer, self)
         self._tf_broadcaster = TransformBroadcaster(self)
 
-        self._camera_transform = TransformStamped()
         self._camera_trans_rot = None
 
         self._depth_info_sub = self.create_subscription(
@@ -93,6 +93,12 @@ class ObjectFinderServer(Node):
         self._img_debug_pub = self.create_publisher(Image, 'img_debug', 10)
         self._wait_for_transform()
 
+        self._gripper_pose_srv = self.create_service(
+            GripperPose, 
+            'gripper_pose', 
+            self._gripper_pose_callback
+        )
+
     def _fill_transform(self, parent_frame, child_frame, pos, rot):
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
@@ -110,6 +116,20 @@ class ObjectFinderServer(Node):
         
         return t
 
+    def _fill_pose_msg(self, pos, orient):
+        p = Pose()
+
+        p.position.x = pos[0]
+        p.position.y = pos[1]
+        p.position.z = pos[2]
+
+        p.orientation.x = orient[0]
+        p.orientation.y = orient[1]
+        p.orientation.z = orient[2]
+        p.orientation.w = orient[3]
+
+        return p
+
     def _wait_for_transform(self):
         while not self._camera_tf_rec:
             if not self._depth_info_rec:
@@ -120,22 +140,22 @@ class ObjectFinderServer(Node):
 
             try:
                 now = rclpy.time.Time()
-                self._camera_transform = self._tf_buffer.lookup_transform(
+                camera_transform = self._tf_buffer.lookup_transform(
                     self._base_frame,
                     self._depth_frame,
                     now
                 )
 
                 trans = (
-                    self._camera_transform.transform.translation.x,
-                    self._camera_transform.transform.translation.y,
-                    self._camera_transform.transform.translation.z
+                    camera_transform.transform.translation.x,
+                    camera_transform.transform.translation.y,
+                    camera_transform.transform.translation.z
                 )
                 quat = [
-                    self._camera_transform.transform.rotation.x,
-                    self._camera_transform.transform.rotation.y,
-                    self._camera_transform.transform.rotation.z,
-                    self._camera_transform.transform.rotation.w
+                    camera_transform.transform.rotation.x,
+                    camera_transform.transform.rotation.y,
+                    camera_transform.transform.rotation.z,
+                    camera_transform.transform.rotation.w
                 ]
 
                 self._camera_trans_rot = (trans, quat)
@@ -157,16 +177,12 @@ class ObjectFinderServer(Node):
         self._depth_constant = 1.0 / msg.k[4]
         self._depth_frame = msg.header.frame_id
 
-    def _image_cb(self, msg):
-        if not self._depth_img_rec or not self._depth_info_rec or not self._camera_tf_rec:
-            return
-
+    def _get_gripping_pose(self, image, depth_image):
         top_left = (700, 190)
         bottom_right = (1010, 530)
         thresh = 130
 
-        img = image_to_numpy(msg)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
 
         min_x, min_y = top_left
@@ -186,7 +202,7 @@ class ObjectFinderServer(Node):
         contours, _ = cv2.findContours(filled, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         total = 0
 
-        depth_image = copy.deepcopy(self._depth_image)
+        poses = []
         for obj_id, c in enumerate(contours):
 
             #approximate the shape of the contours detected
@@ -243,29 +259,55 @@ class ObjectFinderServer(Node):
             #to the centroid->nearest_point vector
             r_quat = quaternion_from_euler(0, 0, r + 1.5708)
 
-            object_transform = self._fill_transform(
-                self._base_frame, 
-                str(obj_id), 
-                (x, y, z), 
+            p = self._fill_pose_msg(
+                (x,y,z),
                 r_quat
             )
+            poses.append(p)
 
-            self._tf_broadcaster.sendTransform(object_transform)
-
-            cv2.circle(img, (int(nearest_points[0][0]), int(nearest_points[0][1])), 8, (0, 255, 0), -1)
-            cv2.circle(img, (int(nearest_points[1][0]), int(nearest_points[1][1])), 8, (0, 255, 0), -1)
-            cv2.circle(img, obj_center, 10, (255, 255, 255), -1)
-            cv2.circle(img, obj_center,  8, (255,   0,   0), -1)
+            cv2.circle(image, (int(nearest_points[0][0]), int(nearest_points[0][1])), 8, (0, 255, 0), -1)
+            cv2.circle(image, (int(nearest_points[1][0]), int(nearest_points[1][1])), 8, (0, 255, 0), -1)
+            cv2.circle(image, obj_center, 10, (255, 255, 255), -1)
+            cv2.circle(image, obj_center,  8, (255,   0,   0), -1)
 
         # plt.imshow(img)
         # plt.show()
-        cv2.rectangle(img, top_left, bottom_right, (0,255,0), 1)
-        img_msg = msgify(Image, img, encoding='rgb8')
+        cv2.rectangle(image, top_left, bottom_right, (0,255,0), 1)
+        img_msg = msgify(Image, image, encoding='rgb8')
         # img_msg = msgify(Image, thresholded, encoding='mono8')
 
-        img_msg.header.frame_id = msg.header.frame_id
+        img_msg.header.frame_id = 'camera_depth_optical_frame'
         self._img_debug_pub.publish(img_msg)
 
+        return poses
+
+    def _gripper_pose_callback(self, request, response):
+        gripping_poses = self._get_gripping_pose(self._image, self._depth_image)
+
+        pose_array = PoseArray()
+        pose_array.header.frame_id = self._base_frame
+        pose_array.header.stamp = self.get_clock().now().to_msg()
+        pose_array.poses = gripping_poses
+
+        response.poses = pose_array
+
+        for pose_id, pose in enumerate(gripping_poses):
+            object_transform = self._fill_transform(
+                self._base_frame, 
+                str(pose_id), 
+                (pose.position.x, pose.position.y, pose.position.z), 
+                (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w), 
+            )
+
+            self._tf_broadcaster.sendTransform(object_transform)
+        
+        return response
+
+    def _image_cb(self, msg):
+        self._image = image_to_numpy(msg)
+
+        if not self._depth_img_rec or not self._depth_info_rec or not self._camera_tf_rec:
+            return
 
     def _find_nearest_point(self, vertices, center):
         center[0] = int(center[0])
