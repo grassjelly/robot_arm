@@ -23,6 +23,10 @@ class PerceptionClient(Node):
                 self.get_logger().info('Perception Request Failed')
                 return []
             else:
+                if not response.poses.poses:
+                    self.get_logger().info('Object Found')
+
+                self.get_logger().info('Perception Request Successful')
                 return response.poses.poses
         else:
             return []
