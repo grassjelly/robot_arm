@@ -5,7 +5,6 @@ from rclpy.node import Node
 
 
 class PerceptionClient(Node):
-
     def __init__(self):
         super().__init__('perception_client')
         self._perception_client = self.create_client(GripperPose, 'gripper_pose')
