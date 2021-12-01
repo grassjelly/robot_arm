@@ -68,7 +68,7 @@ class GripperActionServer(Node):
     def _gripper_callback(self, handle):
         with self._lock:
             if handle.request.command.position == -1.0:
-                target_pos = self._max_pos
+                target_pos = self._max_pos * 2
             else:
                 target_pos = handle.request.command.position
                 

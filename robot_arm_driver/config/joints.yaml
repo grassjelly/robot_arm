@@ -49,7 +49,7 @@ robot_arm_driver:
         torque: 85
         max_torque: 85
         offset: 0.0122718463
-        offset_gain: 10.0
+        offset_gain: 6.0
 
       wrist0_joint:
         index: 3
@@ -103,13 +103,13 @@ robot_arm_driver:
         id: 16
         invert: False
         min_pos: 0.0
-        max_pos: 0.042
+        max_pos: 0.025
         horn_radius: 0.017
         angle_resolution: 0.0879 #degrees
         step_per_sec: 50
         speed: 0.5 
         acceleration: 2
-        torque: 4
+        torque: 6
         max_torque: 40
         acceleration: 2
         offset: 0.0
