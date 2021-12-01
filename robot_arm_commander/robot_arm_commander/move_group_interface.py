@@ -25,6 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import time
+import copy
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -44,12 +45,12 @@ class MoveGroupInterface(Node):
     ## @param move_group Name of the action server
     ## @param listener A TF listener instance (optional, will create a new one if None)
     ## @param plan_only Should we only plan, but not execute?
-    def __init__(self, group, base_frame, planning_frame, plan_only=False, move_group="move_action"):
+    def __init__(self, group, base_frame, planning_frame, plan_only=False, move_group="move_action", offsets=(0,0,0)):
         super().__init__('moveit2_commander')
         self._group = group
         self._fixed_frame = base_frame
         self._planning_frame = planning_frame
-
+        self._offsets = offsets
     
         self._action_client = ActionClient(self, MoveGroup, move_group)
         self._action_client.wait_for_server()
@@ -164,13 +165,19 @@ class MoveGroupInterface(Node):
 
     ## @brief Move the arm, based on a goal pose_stamped for the end effector.
     def move_to_pose(self,
-                   pose_stamped,
+                   goal_pose_stamped,
                    gripper_frame=None,
                    tolerance=0.01,
                    wait=True,
                    **kwargs):
         if gripper_frame is None:
             gripper_frame = self._planning_frame
+
+        pose_stamped = copy.deepcopy(goal_pose_stamped)
+        pose_stamped.pose.position.x += self._offsets[0]
+        pose_stamped.pose.position.y += self._offsets[1]
+        pose_stamped.pose.position.z += self._offsets[2]
+
         pose_stamped = self._complete_msg(pose_stamped)
 
         # Check arguments

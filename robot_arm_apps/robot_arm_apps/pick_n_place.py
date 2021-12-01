@@ -11,19 +11,24 @@ from geometry_msgs.msg import PoseStamped, Pose
 def main(args=None):
     rclpy.init(args=args)
 
-    manipulator = MoveGroupInterface("robot_arm", "base_mount", "tool_link")
-    gripper = Gripper()
+    manipulator = MoveGroupInterface(
+        "robot_arm", 
+        "base_mount", 
+        "tool_link",
+        offsets=(-0.015, 0.015, -0.4)
+    )
+    # gripper = Gripper()
     perception_client = PerceptionClient()
 
     executor = rclpy.executors.MultiThreadedExecutor(3)
     executor.add_node(manipulator)
-    executor.add_node(gripper)
+    # executor.add_node(gripper)
     executor.add_node(perception_client)
 
     thread = threading.Thread(target=executor.spin, daemon=True)
     thread.start()
 
-    gripper.open()
+    # gripper.open()
     perception_client.send_request()
     joint_names = ['pan_joint', 'shoulder_joint', 'elbow_joint', 'wrist0_joint', 'wrist1_joint', 'wrist2_joint']
 
@@ -33,13 +38,29 @@ def main(args=None):
             for pose in poses:
                 ps = PoseStamped()
                 ps.pose = pose
+
+                ps.pose.position.z += 0.05
                 manipulator.move_to_pose(ps)
-                time.sleep(2)
+                time.sleep(1)
+
+                ps.pose.position.z -= 0.05
+                manipulator.move_to_pose(ps)
+                time.sleep(1)
+                # gripper.close()
+
+                ps.pose.position.z += 0.05
+                manipulator.move_to_pose(ps)
+                time.sleep(1)
+
+
                 joint_pos = [0.0] * 6
                 manipulator.move_to_joint_position(joint_names, joint_pos)
             break
         else:
             pass
+
+        rclpy.spin_once(perception_client)
+
     rclpy.shutdown()
 
 
