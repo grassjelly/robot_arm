@@ -114,7 +114,7 @@
     <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5"/>
     <parent link="elbow_link"/>
     <child link="wrist0_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0 0.175"/>
+    <origin rpy="0 0 0" xyz="0.0 0 0.176"/>
   </joint>
 
   <link name="wrist1_link">
@@ -135,32 +135,19 @@
   <joint name="wrist1_joint" type="revolute">
     <axis xyz="0 1 0"/>
     <limit effort="25" lower="-1.8" upper="2.0" velocity="1.5"/>
-    <parent link="wrist0_link"/>
+    <parent link="wrist0_link"/> 
     <child link="wrist1_link"/>
     <origin rpy="0 0 0" xyz="0.0 0 0.0435"/>
   </joint>
 
-  <link name="wrist2_link">
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://robot_arm_description/urdf/meshes/wrist2_link.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://robot_arm_description/urdf/meshes/wrist2_link.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-      <material name="black"/>
-    </visual>
-  </link>
+  <link name="wrist2_link"/>
+
   <joint name="wrist2_joint" type="revolute">
     <axis xyz="0 0 1"/>
     <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5"/>
     <parent link="wrist1_link"/>
     <child link="wrist2_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0 0.07005"/>
+    <origin rpy="0 0 0" xyz="0.0 0 0.0715"/>
   </joint>
 
   <link name="gripper_link">
@@ -181,7 +168,7 @@
   <joint name="gripper_joint" type="fixed">
     <parent link="wrist2_link"/>
     <child link="gripper_link"/>
-    <origin rpy="0 0 0" xyz="0.002784 0 0.1547"/>
+    <origin rpy="0 0 0" xyz="0.002784 0 0.1082"/>
   </joint>
 
   <link name="finger_link">
