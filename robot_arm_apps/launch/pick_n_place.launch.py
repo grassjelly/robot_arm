@@ -13,10 +13,11 @@
 # limitations under the License.
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.conditions import UnlessCondition
 
 
 def generate_launch_description():
@@ -36,9 +37,15 @@ def generate_launch_description():
         [FindPackageShare('robot_arm_perception'), 'launch', 'camera_transform_publisher.launch.py']
     )
 
+    object_finder_server = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_perception'), 'launch', 'object_finder_server.launch.py']
+    )
+
     return LaunchDescription([
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(arm_driver_launch)
+        DeclareLaunchArgument(
+            name='fake_robot', 
+            default_value='false',
+            description='Use Fake Robot'
         ),
 
         IncludeLaunchDescription(
@@ -47,17 +54,30 @@ def generate_launch_description():
         ),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(moveit_config_launch)
+            PythonLaunchDescriptionSource(arm_driver_launch),
+            condition=UnlessCondition(LaunchConfiguration("fake_robot")),
         ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(camera_transform_publisher)
         ),
-        
+
         Node(
-            package='robot_arm_apps',
-            executable='pick_n_place',
-            name='pick_n_place',
+            package='robot_arm_perception',
+            executable='object_finder_server',
+            name='object_finder_server',
             output='screen'        
-        )
+        ),
+        
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(moveit_config_launch),
+            launch_arguments= {'fake_robot' : LaunchConfiguration("fake_robot")}.items()
+        ),
+
+        # Node(
+        #     package='robot_arm_apps',
+        #     executable='pick_n_place',
+        #     name='pick_n_place',
+        #     output='screen'        
+        # )
     ])
