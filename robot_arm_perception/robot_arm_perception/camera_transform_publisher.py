@@ -24,7 +24,9 @@ from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from robot_arm_perception.numpify.image import image_to_numpy
-from robot_arm_perception.utils import WeightedFilter, ArucoFinder, quaternion_from_euler, pixel_to_pose
+from robot_arm_perception.geom.transforms import quaternion_from_euler
+from robot_arm_perception.algorithms.algorithms import WeightedFilter, ArucoFinder, pixel_to_pose
+
 
 class CameraTransformPublisher(Node):
     def __init__(self):
@@ -197,7 +199,6 @@ class CameraTransformPublisher(Node):
         if pos is None or orientation is None:
             return
 
-        # hard_orient = quaternion_from_euler(0.0, 0, 0)
         f_pos, f_orientation = self._weighted_filter.filter(pos, orientation)
         marker_transform = self._fill_transform(
             self._depth_frame, 

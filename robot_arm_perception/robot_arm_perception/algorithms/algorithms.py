@@ -2,7 +2,113 @@ import math
 import cv2.aruco as ar
 from scipy.spatial.transform import Rotation as R
 import numpy as np
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point, LineString
+from shapely.ops import nearest_points
+import cv2
+
+
+def find_objects(image, thresh=130, limits=None):
+    if limits is None:
+        top_left = (0,0)
+        h, w, d = image.shape
+        bottom_right = (h,w)
+    else:
+        top_left = limits[0]
+        bottom_right = limits[1]
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    min_x, min_y = top_left
+    max_x, max_y = bottom_right
+
+    cropped = np.full(gray.shape[:2], 255, dtype=np.uint8)
+    cropped[min_y:max_y, min_x:max_x] = gray[min_y:max_y, min_x:max_x]
+
+    thresholded = cv2.threshold(cropped, thresh, 255, cv2.THRESH_BINARY)[1]
+    thresholded = cv2.erode(thresholded, None, iterations=3)
+    thresholded = cv2.dilate(thresholded, None, iterations=3)
+
+    canny = cv2.Canny(thresholded, 10, 250)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    filled = cv2.morphologyEx(canny, cv2.MORPH_CLOSE, kernel)
+
+    contours, _ = cv2.findContours(filled, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    total = 0
+
+    objects = []
+    centroids = []
+
+    poses = []
+    for obj_id, c in enumerate(contours):
+
+        #approximate the shape of the contours detected
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        #get the corners of the shape
+        corners = []
+        if len(approx) >= 4:
+            total += 1
+            for corner in approx:
+                corners.append(corner[0])
+
+        if len(corners) < 3:
+            continue
+
+        #create a shapely object for easier geometric operations
+        obj = Polygon(corners)
+        obj_center = [int(obj.centroid.x), int(obj.centroid.y)]
+
+        if obj.area < 500:
+            continue
+            
+        objects.append(corners)
+        centroids.append(obj_center)
+
+    return objects, centroids
+
+
+def find_min_max_points(vertices, center):
+    center[0] = int(center[0])
+    center[1] = int(center[1])
+    line_centers = []
+    object_poly = vertices[:]
+    object_poly.append(vertices[0])
+    center_point = Point(center[0],center[1])
+    distances = []
+
+    #iterate every line segment in the polynomial
+    for i in range(1, len(object_poly)):
+        #create a line
+        l = LineString([
+            Point(object_poly[i-1][0], object_poly[i-1][1]),
+            Point(object_poly[i][0], object_poly[i][1])
+        ])
+        #calculate shortest distance from the line to the centroid
+        distances.append(center_point.distance(l))
+
+        #get the point within the line that defines the shortest distance
+        line_centers.append(nearest_points(l, center_point)[0])
+
+    #pick the two shortest points
+    shortest = np.argsort(np.array(distances))[0]
+    longest = np.argsort(np.array(distances))[-1]
+
+    return [
+        [line_centers[shortest].x, line_centers[shortest].y], 
+        [line_centers[longest].x, line_centers[longest].y]
+    ]
+
+
+def get_object_rotation(vertices, center):
+    nearest, furthest = find_min_max_points(vertices, center)
+
+    #get the distance from centroid to the nearest point
+    d_n_points_x = nearest[0] - center[0]
+    d_n_points_y = nearest[1] - center[1]
+
+    #using the delta we can calculate the angle of the object
+    return math.atan2(d_n_points_x, d_n_points_y) + 1.5708
 
 
 def get_depth(depth_image, pixel, depth_constant, transform=False):
@@ -36,6 +142,7 @@ def get_depth(depth_image, pixel, depth_constant, transform=False):
         z = depth * unit_scaling
 
         return np.array([x, y, z])
+
 
 def pixel_to_pose(depth_image, pixel, sample_size, depth_constant, transform=False, same_depth=False):
     def normalize(v):
@@ -132,22 +239,6 @@ def pixel_to_pose(depth_image, pixel, sample_size, depth_constant, transform=Fal
         return None, None
     else:
         return center, quat
-
-def quaternion_from_euler(roll, pitch, yaw):
-    cy = math.cos(yaw * 0.5)
-    sy = math.sin(yaw * 0.5)
-    cp = math.cos(pitch * 0.5)
-    sp = math.sin(pitch * 0.5)
-    cr = math.cos(roll * 0.5)
-    sr = math.sin(roll * 0.5)
-
-    q = [0] * 4
-    q[0] = cy * cp * sr - sy * sp * cr
-    q[1] = sy * cp * sr + cy * sp * cr
-    q[2] = sy * cp * cr - cy * sp * sr
-    q[3] = cy * cp * cr + sy * sp * sr
-
-    return q
 
 
 class WeightedFilter:

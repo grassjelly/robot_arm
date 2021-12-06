@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
@@ -25,17 +26,10 @@ from tf2_ros import TransformBroadcaster
 
 from robot_arm_perception.numpify.image import image_to_numpy
 from robot_arm_perception.numpify.registry import msgify
-from robot_arm_perception.utils import get_depth, quaternion_from_euler
-from robot_arm_perception.geometry import transform_point
+from robot_arm_perception.algorithms.algorithms import get_depth, find_objects, get_object_rotation
+from robot_arm_perception.geom.geometry import transform_point
+from robot_arm_perception.geom.transforms import quaternion_from_euler
 from robot_arm_msgs.srv import GripperPose
-
-import numpy as np
-import cv2
-import math
-import copy
-import matplotlib.pyplot as plt
-from shapely.geometry import Polygon, LineString, Point
-from shapely.ops import nearest_points
 
 class ObjectFinderServer(Node):
     def __init__(self):
@@ -182,54 +176,20 @@ class ObjectFinderServer(Node):
         bottom_right = (1010, 530)
         thresh = 130
 
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (5, 5), 0)
-
-        min_x, min_y = top_left
-        max_x, max_y = bottom_right
-
-        cropped = np.full(gray.shape[:2], 255, dtype=np.uint8)
-        cropped[min_y:max_y, min_x:max_x] = gray[min_y:max_y, min_x:max_x]
-
-        thresholded = cv2.threshold(cropped, thresh, 255, cv2.THRESH_BINARY)[1]
-        thresholded = cv2.erode(thresholded, None, iterations=3)
-        thresholded = cv2.dilate(thresholded, None, iterations=3)
-
-        canny = cv2.Canny(thresholded, 10, 250)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-        filled = cv2.morphologyEx(canny, cv2.MORPH_CLOSE, kernel)
-
-        contours, _ = cv2.findContours(filled, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        total = 0
-
+        objects, centroids = find_objects(
+            image, 
+            thresh=thresh, 
+            limits=(top_left, bottom_right)
+        )
+        
         poses = []
-        for obj_id, c in enumerate(contours):
+        for vertices, center in zip(objects, centroids):
+            r = get_object_rotation(vertices, center)
+            r_quat = quaternion_from_euler(0, 0, r)
 
-            #approximate the shape of the contours detected
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-            
-            #get the corners of the shape
-            corners = []
-            if len(approx) >= 4:
-                total += 1
-                for corner in approx:
-                    corners.append(corner[0])
-
-            if len(corners) < 3:
-                continue
-
-            #create a shapely object for easier geometric operations
-            obj = Polygon(corners)
-            obj_center = [int(obj.centroid.x), int(obj.centroid.y)]
-
-            if obj.area < 500:
-                continue
-
-            #get the position of object in 3D using the RGBD image
             obj_depth = get_depth(
                 depth_image, 
-                obj_center, 
+                center, 
                 self._depth_constant
             )
 
@@ -240,44 +200,11 @@ class ObjectFinderServer(Node):
             #now we transform it to the robot's base
             x, y, z = transform_point(self._camera_trans_rot, obj_depth)
 
-            #just ignore noisy readings that says the object is below the base
-            if z < 0:
-                continue
-
-            #from the detected corners find, the nearest point to the centroid
-            nearest_points = self._find_nearest_point(corners, obj_center)
-
-            #get the distance from centroid to the nearest point
-            d_n_points_x = nearest_points[0][0] - obj_center[0]
-            d_n_points_y = nearest_points[0][1] - obj_center[1]
-
-            #using the delta we can calculate the angle of the object
-            r = math.atan2(d_n_points_x, d_n_points_y)
-
-            #using that angle we can get the gripping angle
-            #just add half a pi so that the opening of the gripper is perpindicular
-            #to the centroid->nearest_point vector
-            r_quat = quaternion_from_euler(0, 0, r + 1.5708)
-
             p = self._fill_pose_msg(
                 (x,y,z),
                 r_quat
             )
             poses.append(p)
-
-            cv2.circle(image, (int(nearest_points[0][0]), int(nearest_points[0][1])), 8, (0, 255, 0), -1)
-            cv2.circle(image, (int(nearest_points[1][0]), int(nearest_points[1][1])), 8, (0, 255, 0), -1)
-            cv2.circle(image, obj_center, 10, (255, 255, 255), -1)
-            cv2.circle(image, obj_center,  8, (255,   0,   0), -1)
-
-        # plt.imshow(img)
-        # plt.show()
-        cv2.rectangle(image, top_left, bottom_right, (0,255,0), 1)
-        img_msg = msgify(Image, image, encoding='rgb8')
-        # img_msg = msgify(Image, thresholded, encoding='mono8')
-
-        img_msg.header.frame_id = 'camera_depth_optical_frame'
-        self._img_debug_pub.publish(img_msg)
 
         return poses
 
@@ -308,37 +235,6 @@ class ObjectFinderServer(Node):
 
         if not self._depth_img_rec or not self._depth_info_rec or not self._camera_tf_rec:
             return
-
-    def _find_nearest_point(self, vertices, center):
-        center[0] = int(center[0])
-        center[1] = int(center[1])
-        line_centers = []
-        object_poly = vertices[:]
-        object_poly.append(vertices[0])
-        center_point = Point(center[0],center[1])
-        distances = []
-
-        #iterate every line segment in the polynomial
-        for i in range(1, len(object_poly)):
-            #create a line
-            l = LineString([
-                Point(object_poly[i-1][0], object_poly[i-1][1]),
-                Point(object_poly[i][0], object_poly[i][1])
-            ])
-            #calculate shortest distance from the line to the centroid
-            distances.append(center_point.distance(l))
-
-            #get the point within the line that defines the shortest distance
-            line_centers.append(nearest_points(l, center_point)[0])
-
-        #pick the two shortest points
-        shortest = np.argsort(np.array(distances))[:2]
-
-        return [
-            [line_centers[shortest[0]].x, line_centers[shortest[0]].y], 
-            [line_centers[shortest[1]].x, line_centers[shortest[1]].y]
-        ]
-
         
 def main(args=None):
     rclpy.init(args=args)
