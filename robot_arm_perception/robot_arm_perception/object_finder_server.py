@@ -174,14 +174,14 @@ class ObjectFinderServer(Node):
     def _get_gripping_pose(self, image, depth_image):
         top_left = (700, 190)
         bottom_right = (1010, 530)
-        thresh = 130
+        thresh = 150
 
         objects, centroids = find_objects(
             image, 
             thresh=thresh, 
             limits=(top_left, bottom_right)
         )
-        
+
         poses = []
         for vertices, center in zip(objects, centroids):
             r = get_object_rotation(vertices, center)
