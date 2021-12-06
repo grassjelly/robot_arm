@@ -1,6 +1,6 @@
 import cv2
 import matplotlib.pyplot as plt
-from robot_arm_perception.algorithms import find_objects, get_object_rotation
+from robot_arm_perception.algorithms.algorithms import find_objects, get_object_rotation
 import math
 
 img = cv2.imread('fruits.jpg', cv2.IMREAD_COLOR) 
