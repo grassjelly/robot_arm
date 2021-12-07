@@ -42,7 +42,7 @@ def main(args=None):
                 ps.pose = pose
                 ps.pose.position.x -= 0.01
                 ps.pose.position.y += 0.01
-                ps.pose.position.z = 0.01
+                ps.pose.position.z = 0.005
 
                 ps.pose.position.z += 0.10
                 manipulator.move_to_pose(ps)
