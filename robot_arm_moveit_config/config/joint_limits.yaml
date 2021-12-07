@@ -17,41 +17,41 @@
             joint_limits:
               elbow_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               finger_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               mimic_finger_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               pan_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               shoulder_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               wrist0_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               wrist1_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
-                max_acceleration: 0.46
+                max_acceleration: 1.0
               wrist2_joint:
                 has_velocity_limits: true
-                max_velocity: 2.0
+                max_velocity: 1.0
                 has_acceleration_limits: true
                 max_acceleration: 0.46
