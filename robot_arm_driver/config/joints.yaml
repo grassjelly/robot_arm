@@ -101,7 +101,7 @@ robot_arm_driver:
       finger_joint:
         index: 0
         id: 16
-        invert: False
+        invert: True
         min_pos: 0.0
         max_pos: 0.025
         horn_radius: 0.017
