@@ -227,7 +227,7 @@ def pixel_to_pose(depth_image, pixel, sample_size, depth_constant, transform=Fal
         z_axis = np.cross(x_axis, y_axis)
         z_axis = normalize(z_axis)
     
-    quat = R.from_matrix([
+    quat = R.from_dcm([
         [x_axis[0], y_axis[0], z_axis[0]],
         [x_axis[1], y_axis[1], z_axis[1]],
         [x_axis[2], y_axis[2], z_axis[2]]
