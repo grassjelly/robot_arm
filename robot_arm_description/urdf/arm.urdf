@@ -1,344 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <robot name="robot_arm">
-    <material name="black">
-        <color rgba="0.15 0.15 0.15 1.0" />
-    </material>
-    <link name="base_mount" />
-    <link name="base_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/base_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/base_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="base_to_mount" type="fixed">
-        <parent link="base_mount" />
-        <child link="base_link" />
-        <origin rpy="0 0 0" xyz="0 0 0.0575" />
-    </joint>
-    <link name="pan_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/pan_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/pan_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="pan_joint" type="revolute">
-        <axis xyz="0 0 1" />
-        <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
-        <parent link="base_link" />
-        <child link="pan_link" />
-        <origin rpy="0 0 0" xyz="-0.012 0 0.002" />
-    </joint>
-    <link name="shoulder_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/shoulder_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/shoulder_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="shoulder_joint" type="revolute">
-        <axis xyz="0 1 0" />
-        <limit effort="25" lower="-1.8515" upper="2.1015" velocity="1.5" />
-        <parent link="pan_link" />
-        <child link="shoulder_link" />
-        <origin rpy="0 0 0" xyz="0 0 0.053" />
-    </joint>
-    <link name="elbow_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/elbow_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/elbow_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="elbow_joint" type="revolute">
-        <axis xyz="0 1 0" />
-        <limit effort="25" lower="-0.4" upper="3.0" velocity="1.5" />
-        <parent link="shoulder_link" />
-        <child link="elbow_link" />
-        <origin rpy="0 0 0" xyz="0.03 0 0.2205" />
-    </joint>
-    <link name="wrist0_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist0_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist0_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="wrist0_joint" type="revolute">
-        <axis xyz="0 0 1" />
-        <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
-        <parent link="elbow_link" />
-        <child link="wrist0_link" />
-        <origin rpy="0 0 0" xyz="0.0 0 0.176" />
-    </joint>
-    <link name="wrist1_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist1_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist1_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="wrist1_joint" type="revolute">
-        <axis xyz="0 1 0" />
-        <limit effort="25" lower="-1.8" upper="2.0" velocity="1.5" />
-        <parent link="wrist0_link" />
-        <child link="wrist1_link" />
-        <origin rpy="0 0 0" xyz="0.0 0 0.0435" />
-    </joint>
-    <link name="wrist2_link" />
-    <joint name="wrist2_joint" type="revolute">
-        <axis xyz="0 0 1" />
-        <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
-        <parent link="wrist1_link" />
-        <child link="wrist2_link" />
-        <origin rpy="0 0 0" xyz="0.0 0 0.0715" />
-    </joint>
-    <link name="gripper_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/gripper_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/gripper_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="gripper_joint" type="fixed">
-        <parent link="wrist2_link" />
-        <child link="gripper_link" />
-        <origin rpy="0 0 0" xyz="0.002784 0 0.1082" />
-    </joint>
-    <link name="finger_link">
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="finger_joint" type="prismatic">
-        <axis xyz="0 1 0" />
-        <limit lower="0" upper="0.026" effort="1.0" velocity="0" />
-        <parent link="gripper_link" />
-        <child link="finger_link" />
-        <origin rpy="0 0 0" xyz="0 0 0" />
-    </joint>
-    <link name="mimic_finger_link">
-        <collision>
-            <origin rpy="0 0 3.1416" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-        </collision>
-        <visual>
-            <origin rpy="0 0 3.1416" xyz="0 0 0" />
-            <geometry>
-                <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        
-<inertial>
-            <mass value="0.1" />
-            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
-        </inertial>
-
-    </link>
-    <joint name="mimic_finger_joint" type="prismatic">
-        <axis xyz="0 1 0" />
-        <mimic joint="finger_joint" multiplier="-1" />
-        <limit lower="-0.026" upper="0" effort="1.0" velocity="0" />
-        <parent link="gripper_link" />
-        <child link="mimic_finger_link" />
-        <origin rpy="0 0 0" xyz="0.0 0 0" />
-    </joint>
-    <link name="tool_link" />
-    <joint name="tool_joint" type="fixed">
-        <parent link="gripper_link" />
-        <child link="tool_link" />
-        <origin rpy="0 -3.1416 0" xyz="0 0 -0.005" />
-    </joint>
-    <ros2_control name="robot_arm" type="system">
-        <hardware>
-            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-        </hardware>
-        <joint name="pan_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-        <joint name="shoulder_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-        <joint name="elbow_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-        <joint name="wrist0_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-        <joint name="wrist1_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-        <joint name="wrist2_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-        <joint name="finger_joint">
-            <command_interface name="position" >
-                <param name="min">-1000</param>
-                <param name="max">1000</param>
-            </command_interface>
-            <state_interface name="position" />
-            <state_interface name="velocity" />
-            <state_interface name="effort" />
-        </joint>
-    </ros2_control>
-    <gazebo>
-        <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
-            <robot_param>robot_description</robot_param>
-            <robot_param_node>robot_state_publisher</robot_param_node>
-            <parameters>$(find robot_arm_description)/config/controller.yaml</parameters>
-        </plugin>
-    </gazebo>
+   <material name="black">
+      <color rgba="0.15 0.15 0.15 1.0" />
+   </material>
+   <link name="base_mount" />
+   <link name="base_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/base_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/base_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="base_to_mount" type="fixed">
+      <parent link="base_mount" />
+      <child link="base_link" />
+      <origin rpy="0 0 0" xyz="0 0 0.0575" />
+   </joint>
+   <link name="pan_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/pan_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/pan_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="pan_joint" type="revolute">
+      <axis xyz="0 0 1" />
+      <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
+      <parent link="base_link" />
+      <child link="pan_link" />
+      <origin rpy="0 0 0" xyz="-0.012 0 0.002" />
+   </joint>
+   <link name="shoulder_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/shoulder_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/shoulder_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="shoulder_joint" type="revolute">
+      <axis xyz="0 1 0" />
+      <limit effort="25" lower="-1.8515" upper="2.1015" velocity="1.5" />
+      <parent link="pan_link" />
+      <child link="shoulder_link" />
+      <origin rpy="0 0 0" xyz="0 0 0.053" />
+   </joint>
+   <link name="elbow_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/elbow_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/elbow_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="elbow_joint" type="revolute">
+      <axis xyz="0 1 0" />
+      <limit effort="25" lower="-0.4" upper="3.0" velocity="1.5" />
+      <parent link="shoulder_link" />
+      <child link="elbow_link" />
+      <origin rpy="0 0 0" xyz="0.03 0 0.2205" />
+   </joint>
+   <link name="wrist0_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist0_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist0_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="wrist0_joint" type="revolute">
+      <axis xyz="0 0 1" />
+      <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
+      <parent link="elbow_link" />
+      <child link="wrist0_link" />
+      <origin rpy="0 0 0" xyz="0.0 0 0.176" />
+   </joint>
+   <link name="wrist1_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist1_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/wrist1_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="wrist1_joint" type="revolute">
+      <axis xyz="0 1 0" />
+      <limit effort="25" lower="-1.8" upper="2.0" velocity="1.5" />
+      <parent link="wrist0_link" />
+      <child link="wrist1_link" />
+      <origin rpy="0 0 0" xyz="0.0 0 0.0435" />
+   </joint>
+   <link name="wrist2_link" />
+   <joint name="wrist2_joint" type="revolute">
+      <axis xyz="0 0 1" />
+      <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
+      <parent link="wrist1_link" />
+      <child link="wrist2_link" />
+      <origin rpy="0 0 0" xyz="0.0 0 0.0715" />
+   </joint>
+   <link name="gripper_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/gripper_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/gripper_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="gripper_joint" type="fixed">
+      <parent link="wrist2_link" />
+      <child link="gripper_link" />
+      <origin rpy="0 0 0" xyz="0.002784 0 0.1082" />
+   </joint>
+   <link name="finger_link">
+      <collision>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="finger_joint" type="prismatic">
+      <axis xyz="0 1 0" />
+      <limit lower="0" upper="0.026" effort="1.0" velocity="0" />
+      <parent link="gripper_link" />
+      <child link="finger_link" />
+      <origin rpy="0 0 0" xyz="0 0 0" />
+   </joint>
+   <link name="mimic_finger_link">
+      <collision>
+         <origin rpy="0 0 3.1416" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+      </collision>
+      <visual>
+         <origin rpy="0 0 3.1416" xyz="0 0 0" />
+         <geometry>
+            <mesh filename="$(find robot_arm_description)/urdf/meshes/finger_link.stl" scale="0.001 0.001 0.001" />
+         </geometry>
+         <material name="black" />
+      </visual>
+      <inertial>
+         <mass value="0.1" />
+         <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+      </inertial>
+   </link>
+   <joint name="mimic_finger_joint" type="prismatic">
+      <axis xyz="0 1 0" />
+      <mimic joint="finger_joint" multiplier="-1" />
+      <limit lower="-0.026" upper="0" effort="1.0" velocity="0" />
+      <parent link="gripper_link" />
+      <child link="mimic_finger_link" />
+      <origin rpy="0 0 0" xyz="0.0 0 0" />
+   </joint>
+   <link name="tool_link" />
+   <joint name="tool_joint" type="fixed">
+      <parent link="gripper_link" />
+      <child link="tool_link" />
+      <origin rpy="0 -3.1416 0" xyz="0 0 -0.005" />
+   </joint>
+   <ros2_control name="robot_arm" type="system">
+      <hardware>
+         <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      </hardware>
+      <joint name="mimic_finger_joint">
+         <param name="mimic">finger_joint</param>
+         <param name="multiplier">-1</param>
+         <command_interface name="position" />
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="pan_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="shoulder_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="elbow_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="wrist0_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="wrist1_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="wrist2_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+      <joint name="finger_joint">
+         <command_interface name="position">
+            <param name="min">-1000</param>
+            <param name="max">1000</param>
+         </command_interface>
+         <state_interface name="position" />
+         <state_interface name="velocity" />
+         <state_interface name="effort" />
+      </joint>
+   </ros2_control>
+   <gazebo>
+      <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+         <robot_param>robot_description</robot_param>
+         <robot_param_node>robot_state_publisher</robot_param_node>
+         <parameters>$(find robot_arm_description)/config/controller.yaml</parameters>
+      </plugin>
+   </gazebo>
 </robot>
