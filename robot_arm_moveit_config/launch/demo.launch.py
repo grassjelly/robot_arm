@@ -15,7 +15,7 @@ def generate_launch_description():
     moveit_config_path = get_package_share_path('robot_arm_moveit_config')
 
     urdf_path = PathJoinSubstitution(
-        [FindPackageShare("robot_arm_description"), "urdf", "arm.urdf"]
+        [FindPackageShare("robot_arm_description"), "urdf", "arm.urdf.xacro"]
     )
 
     ld = LaunchDescription()
@@ -46,13 +46,22 @@ def generate_launch_description():
         semantic_content = f.read()
 
     # Given the published joint states, publish tf for the robot links
-    rsp_node = Node(package='robot_state_publisher', executable='robot_state_publisher',
-                    respawn=True, output='screen',
-                    parameters=[{'robot_description': robot_description_content, 'publish_frequency': 15.0}])
+    rsp_node = Node(
+        package='robot_state_publisher', 
+        executable='robot_state_publisher',
+        respawn=True, output='screen',
+        parameters=[{
+            'robot_description': robot_description_content, 
+            'publish_frequency': 15.0, 
+            'use_sim_time': False
+        }]
+    )
     ld.add_action(rsp_node)
 
     # Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default)
-    move_group_launch_py = PythonLaunchDescriptionSource(str(moveit_config_path / 'launch/move_group.launch.py'))
+    move_group_launch_py = PythonLaunchDescriptionSource(
+        str(moveit_config_path / 'launch/move_group.launch.py')
+    )
     move_group_launch_args = {
         'allow_trajectory_execution': 'true',
         'fake_execution': 'true',
@@ -62,8 +71,10 @@ def generate_launch_description():
         'robot_description': robot_description_content,
         'semantic_config': semantic_content,
     }
-    move_group_launch = IncludeLaunchDescription(move_group_launch_py,
-                                                 launch_arguments=move_group_launch_args.items())
+    move_group_launch = IncludeLaunchDescription(
+        move_group_launch_py,
+        launch_arguments=move_group_launch_args.items()
+    )
     ld.add_action(move_group_launch)
 
     # Run Rviz and load the default config to see the state of the move_group node
@@ -76,28 +87,35 @@ def generate_launch_description():
         'robot_description': robot_description_content,
         'semantic_config': semantic_content,
     }
-    moveit_rviz_launch = IncludeLaunchDescription(moveit_rviz_launch_py, launch_arguments=moveit_rviz_args.items(),
-                                                  condition=IfCondition(LaunchConfiguration('use_rviz')))
+    moveit_rviz_launch = IncludeLaunchDescription(
+        moveit_rviz_launch_py, 
+        launch_arguments=moveit_rviz_args.items(),
+        condition=IfCondition(LaunchConfiguration('use_rviz'))
+    )
     ld.add_action(moveit_rviz_launch)
 
     # If database loading was enabled, start mongodb as well
     warehouse_launch_py = PythonLaunchDescriptionSource(
         str(moveit_config_path / 'launch/warehouse_db.launch.py')
     )
-    warehouse_launch = IncludeLaunchDescription(warehouse_launch_py,
-                                                launch_arguments={'moveit_warehouse_database_path':
-                                                                  LaunchConfiguration('db_path')}.items(),
-                                                condition=IfCondition(LaunchConfiguration('db'))
-                                                )
+    warehouse_launch = IncludeLaunchDescription(
+        warehouse_launch_py,
+        launch_arguments={
+            'moveit_warehouse_database_path':
+            LaunchConfiguration('db_path')
+        }.items(),
+        condition=IfCondition(LaunchConfiguration('db'))
+    )
     ld.add_action(warehouse_launch)
 
     # Fake joint driver
     fake_joint_driver_node = Node(
         package='controller_manager',
         executable='ros2_control_node',
-        parameters=[{'robot_description': robot_description_content},
-                    str(moveit_config_path / 'config/ros_controllers.yaml'),
-                    ],
+        parameters=[
+            {'robot_description': robot_description_content},
+            str(moveit_config_path / 'config/ros_controllers.yaml'),
+        ],
     )
     ld.add_action(fake_joint_driver_node)
 
