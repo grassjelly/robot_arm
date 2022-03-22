@@ -2,13 +2,13 @@ controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
 
-    joint_trajectory_controller:
+    robot_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-joint_trajectory_controller:
+robot_arm_controller:
   ros__parameters:
     joints:
       - pan_joint
@@ -17,7 +17,6 @@ joint_trajectory_controller:
       - wrist0_joint
       - wrist1_joint
       - wrist2_joint
-      - finger_joint
     interface_name: position
     command_interfaces:
       - position
