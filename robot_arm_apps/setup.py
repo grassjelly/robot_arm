@@ -22,7 +22,8 @@ setup(
     license='Apache 2.0',
     entry_points={
         'console_scripts': [
-            'pick_n_place = robot_arm_apps.pick_n_place:main'
+            'moveit_test = robot_arm_apps.moveit_test:main',
+            'table_pick_n_place = robot_arm_apps.table_pick_n_place:main'
         ],
     },
 )
