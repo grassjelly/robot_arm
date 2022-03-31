@@ -35,8 +35,7 @@ def generate_launch_description():
     ld.add_action(DeclareLaunchArgument('use_gui', default_value='false', choices=['true', 'false'],
                                         description="By default, hide joint_state_publisher's GUI"))
     ld.add_action(DeclareLaunchArgument('use_rviz', default_value='true', choices=['true', 'false']))
-
-    ld.add_action(DeclareLaunchArgument('fake_robot', default_value='false', choices=['true', 'false']))
+    ld.add_action(DeclareLaunchArgument('sim', default_value='false', choices=['true', 'false']))
 
     # Load the URDF, SRDF and other .yaml configuration files
     robot_description_content = Command(
@@ -64,7 +63,7 @@ def generate_launch_description():
     )
     move_group_launch_args = {
         'allow_trajectory_execution': 'true',
-        'fake_execution': 'true',
+        'sim': LaunchConfiguration('sim'),
         'info': 'true',
         'debug': LaunchConfiguration('debug'),
         'pipeline': LaunchConfiguration('pipeline'),
