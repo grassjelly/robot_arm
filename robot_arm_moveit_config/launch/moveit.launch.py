@@ -44,19 +44,6 @@ def generate_launch_description():
     with open(moveit_config_path / 'config/robot_arm.srdf', 'r') as f:
         semantic_content = f.read()
 
-    # Given the published joint states, publish tf for the robot links
-    rsp_node = Node(
-        package='robot_state_publisher', 
-        executable='robot_state_publisher',
-        respawn=True, output='screen',
-        parameters=[{
-            'robot_description': robot_description_content, 
-            'publish_frequency': 15.0, 
-            'use_sim_time': False
-        }]
-    )
-    ld.add_action(rsp_node)
-
     # Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default)
     move_group_launch_py = PythonLaunchDescriptionSource(
         str(moveit_config_path / 'launch/move_group.launch.py')
