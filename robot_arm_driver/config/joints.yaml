@@ -1,6 +1,6 @@
 robot_arm_driver:
   ros__parameters:
-    serial_port: /dev/ttyUSB0
+    serial_port: /dev/linoarm
     baud_rate: 1000000
     revolute_joint_names: ['pan_joint', 'shoulder_joint', 'elbow_joint', 'wrist0_joint', 'wrist1_joint', 'wrist2_joint']
     initial_pos: [0.0, -0.7853, 2.35619, 0.0, 1.5708, 0.0]
