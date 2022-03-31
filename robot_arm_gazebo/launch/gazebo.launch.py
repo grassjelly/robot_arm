@@ -29,46 +29,13 @@ def generate_launch_description():
         [FindPackageShare('robot_arm_description'), 'launch', 'description.launch.py']
     )
 
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'robot_arm'],
-                        output='screen')
-
-    load_joint_state_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'joint_state_broadcaster'],
-        output='screen'
-    )
-
-    load_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'robot_arm_controller'],
-        output='screen'
-    )
-
-    load_grippper_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'gripper_controller'],
-        output='screen'
+    load_controllers_launch_path = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_gazebo'), 'launch', 'load_controllers.launch.py']
     )
 
     return LaunchDescription([
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=spawn_entity,
-                on_exit=[load_joint_state_controller],
-            )
-        ),
-
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=load_joint_state_controller,
-                on_exit=[load_joint_trajectory_controller],
-            )
-        ),
-
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=load_joint_trajectory_controller,
-                on_exit=[load_grippper_controller],
-            )
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(load_controllers_launch_path)
         ),
 
         ExecuteProcess(
@@ -82,9 +49,7 @@ def generate_launch_description():
                 'use_sim_time': str(use_sim_time),
                 'publish_joints': 'false',
             }.items()
-        ),
-
-        spawn_entity
+        )
     ])
 
 #sources: 
