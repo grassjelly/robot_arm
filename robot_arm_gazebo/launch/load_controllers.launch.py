@@ -25,11 +25,6 @@ from launch.event_handlers import OnProcessExit
 def generate_launch_description():
     use_sim_time = True
 
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'robot_arm'],
-                        output='screen')
-
     load_joint_state_controller = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'joint_state_broadcaster'],
         output='screen'
@@ -46,12 +41,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=spawn_entity,
-                on_exit=[load_joint_state_controller],
-            )
-        ),
+        load_joint_state_controller,
 
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -65,9 +55,7 @@ def generate_launch_description():
                 target_action=load_joint_trajectory_controller,
                 on_exit=[load_grippper_controller],
             )
-        ),
-
-        spawn_entity
+        )
     ])
 
 #sources: 

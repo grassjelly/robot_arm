@@ -43,6 +43,14 @@ def generate_launch_description():
             output='screen'
         ),
 
+        Node(
+            package='gazebo_ros',
+            executable='spawn_entity.py',
+            name='urdf_spawner',
+            output='screen',
+            arguments=["-topic", "robot_description", "-entity", "robot_arm"]
+        ),
+        
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(description_launch_path),
             launch_arguments={
