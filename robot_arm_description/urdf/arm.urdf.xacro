@@ -5,17 +5,17 @@
       <color rgba="0.15 0.15 0.15 1.0" />
    </material>
    <link name="base_mount" />
-   <link name="base_link">
+   <link name="box_link">
       <collision>
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="file://$(find robot_arm_description)/urdf/meshes/base_link.stl" scale="0.001 0.001 0.001" />
+            <mesh filename="file://$(find robot_arm_description)/urdf/meshes/box_link.stl" scale="0.001 0.001 0.001" />
          </geometry>
       </collision>
       <visual>
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="file://$(find robot_arm_description)/urdf/meshes/base_link.stl" scale="0.001 0.001 0.001" />
+            <mesh filename="file://$(find robot_arm_description)/urdf/meshes/box_link.stl" scale="0.001 0.001 0.001" />
          </geometry>
          <material name="black" />
       </visual>
@@ -24,12 +24,12 @@
          <inertia ixx="0.1" iyy="0.1" izz="0.1" ixy="0.0" ixz="0.0" iyz="0.0" />
       </inertial>
    </link>
-   <gazebo reference="base_link">
+   <gazebo reference="box_link">
       <material>Gazebo/FlatBlack</material>
    </gazebo>
    <joint name="base_to_mount" type="fixed">
       <parent link="base_mount" />
-      <child link="base_link" />
+      <child link="box_link" />
       <origin rpy="0 0 0" xyz="0 0 0.0575" />
    </joint>
    <link name="pan_link">
@@ -57,7 +57,7 @@
    <joint name="pan_joint" type="revolute">
       <axis xyz="0 0 1" />
       <limit effort="25" lower="-3.14159265359" upper="3.14159265359" velocity="1.5" />
-      <parent link="base_link" />
+      <parent link="box_link" />
       <child link="pan_link" />
       <origin rpy="0 0 0" xyz="-0.012 0 0.002" />
    </joint>

@@ -46,7 +46,7 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_link:
+        box_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -110,7 +110,7 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_link:
+        box_link:
           Value: true
         base_mount:
           Value: true
@@ -139,7 +139,7 @@ Visualization Manager:
       Show Names: true
       Tree:
         base_mount:
-          base_link:
+          box_link:
             pan_link:
               shoulder_link:
                 elbow_link:
