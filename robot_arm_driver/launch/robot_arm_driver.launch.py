@@ -16,9 +16,10 @@ from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
@@ -49,6 +50,12 @@ def generate_launch_description():
             description='Run rviz'
         ),
 
+        DeclareLaunchArgument(
+            name='launch_description', 
+            default_value='true',
+            description='Run with robot description'
+        ),
+
         Node(
             package='controller_manager',
             executable='ros2_control_node',
@@ -77,6 +84,7 @@ def generate_launch_description():
             launch_arguments={
                 'publish_joints': 'false',
                 'rviz': LaunchConfiguration("rviz")
-            }.items()
+            }.items(),
+            condition=IfCondition(LaunchConfiguration("launch_description")),
         )
     ])
