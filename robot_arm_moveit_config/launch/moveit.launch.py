@@ -34,7 +34,7 @@ def generate_launch_description():
     # This corresponds to moving around the real robot without the use of MoveIt.
     ld.add_action(DeclareLaunchArgument('use_gui', default_value='false', choices=['true', 'false'],
                                         description="By default, hide joint_state_publisher's GUI"))
-    ld.add_action(DeclareLaunchArgument('use_rviz', default_value='true', choices=['true', 'false']))
+    ld.add_action(DeclareLaunchArgument('rviz', default_value='false', choices=['true', 'false']))
     ld.add_action(DeclareLaunchArgument('sim', default_value='false', choices=['true', 'false']))
 
     # Load the URDF, SRDF and other .yaml configuration files
@@ -89,7 +89,7 @@ def generate_launch_description():
     moveit_rviz_launch = IncludeLaunchDescription(
         moveit_rviz_launch_py, 
         launch_arguments=moveit_rviz_args.items(),
-        condition=IfCondition(LaunchConfiguration('use_rviz'))
+        condition=IfCondition(LaunchConfiguration('rviz'))
     )
     ld.add_action(moveit_rviz_launch)
 
