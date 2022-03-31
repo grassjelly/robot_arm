@@ -36,10 +36,11 @@ def generate_launch_description():
                                         description="By default, hide joint_state_publisher's GUI"))
     ld.add_action(DeclareLaunchArgument('rviz', default_value='false', choices=['true', 'false']))
     ld.add_action(DeclareLaunchArgument('sim', default_value='false', choices=['true', 'false']))
+    ld.add_action(DeclareLaunchArgument('urdf_path', default_value=urdf_path))
 
     # Load the URDF, SRDF and other .yaml configuration files
     robot_description_content = Command(
-        ['xacro ', urdf_path]
+        ['xacro ', LaunchConfiguration('urdf_path')]
     )
     with open(moveit_config_path / 'config/robot_arm.srdf', 'r') as f:
         semantic_content = f.read()
