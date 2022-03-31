@@ -95,18 +95,11 @@ class JointsCommandSubscriber(Node):
         self._lock = threading.Lock()
         self._joints_command = base_arm.initial_position
 
-        pos_goal_qos = QoSProfile(
-          durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-          reliability=QoSReliabilityPolicy.RELIABLE,
-          history=QoSHistoryPolicy.KEEP_LAST,
-          depth=1
-        )
-
         self._pos_goal_subscirber = self.create_subscription(
             JointTrajectoryControllerState,
-            'robot_arm_controller/state',
+            '/robot_arm_controller/state',
             self._pos_goal_callback,
-            pos_goal_qos
+            10
         )
         self._pos_goal_subscirber
 
