@@ -47,7 +47,6 @@ joint_params = [
     'horn_radius'
 ]
 
-
 class GripperActionServer(Node):
     def __init__(self, base_arm):
         super().__init__('gripper_action_server')
@@ -61,7 +60,7 @@ class GripperActionServer(Node):
         self._action_server = ActionServer(
             self,
             GripperCommand,
-            'gripper_command',
+            '/gripper_controller/gripper_cmd',
             self._gripper_callback
         )
 

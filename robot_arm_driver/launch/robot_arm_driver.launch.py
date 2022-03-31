@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import IncludeLaunchDescription
@@ -22,8 +22,20 @@ from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
+    urdf_path = PathJoinSubstitution(
+        [FindPackageShare("robot_arm_description"), "urdf", "arm.urdf.xacro"]
+    )
+
+    robot_description = Command(
+        ['xacro ', urdf_path]
+    )
+
     joints_config = PathJoinSubstitution(
         [FindPackageShare('robot_arm_driver'), 'config', 'joints.yaml']
+    )
+
+    controller_config = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_driver'), 'config', 'controller.yaml']
     )
 
     description_launch_path = PathJoinSubstitution(
@@ -35,6 +47,21 @@ def generate_launch_description():
             name='rviz', 
             default_value='false',
             description='Run rviz'
+        ),
+
+        Node(
+            package='controller_manager',
+            executable='ros2_control_node',
+            parameters=[
+                {'robot_description': robot_description},
+                controller_config,
+            ],
+        ),
+
+        Node(
+            package='controller_manager',
+            executable='spawner.py',
+            arguments=['robot_arm_controller'],
         ),
 
         Node(
