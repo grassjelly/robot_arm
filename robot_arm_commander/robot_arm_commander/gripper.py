@@ -7,7 +7,7 @@ from control_msgs.action import GripperCommand
 class Gripper(Node):
     def __init__(self):
         super().__init__('robot_arm_gripper')
-        self._action_client = ActionClient(self, GripperCommand, 'gripper_command')
+        self._action_client = ActionClient(self, GripperCommand, '/gripper_controller/gripper_cmd')
         self._action_client.wait_for_server()
 
     def open(self, wait=True):
