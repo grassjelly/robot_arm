@@ -138,9 +138,9 @@ class RobotArmDriver(Node):
             parameters=[
                 ('serial_port', '/dev/ttyUSB0'),
                 ('baud_rate', 1000000),
-                ('initial_pos', [0,0,0,0,0,0]),
-                ('revolute_joint_names', []),
-                ('prismatic_joint_names', []),
+                ('initial_pos', [0.,0.,0.,0.,0.,0.]),
+                ('revolute_joint_names', ['pan_joint', 'shoulder_joint', 'elbow_joint', 'wrist0_joint', 'wrist1_joint', 'wrist2_joint']),
+                ('prismatic_joint_names', ['finger_joint']),
         ])
 
         serial_port = self.get_parameter('serial_port').value
