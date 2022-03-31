@@ -56,6 +56,12 @@ def generate_launch_description():
             description='Run with robot description'
         ),
 
+        DeclareLaunchArgument(
+            name='joint_states_topic', 
+            default_value='/joint_states',
+            description='Robot Arm Joint States Topic'
+        ),
+
         Node(
             package='controller_manager',
             executable='ros2_control_node',
@@ -76,7 +82,10 @@ def generate_launch_description():
             executable='robot_arm_driver',
             name='robot_arm_driver',
             output='screen',
-            parameters=[joints_config]
+            parameters=[joints_config],
+            remappings=[
+                ('/joint_states', LaunchConfiguration("joint_states_topic")),
+            ]
         ),
 
         IncludeLaunchDescription(
