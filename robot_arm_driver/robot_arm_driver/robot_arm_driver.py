@@ -30,22 +30,22 @@ from std_msgs.msg import Bool
 from pyfeetech.servo import Revolute, Prismatic, Controller
 
 
-joint_params = [
-    'index',
-    'id',
-    'invert',
-    'min_pos',
-    'max_pos',
-    'angle_resolution',
-    'step_per_sec',
-    'speed',
-    'acceleration',
-    'torque',
-    'max_torque',
-    'offset',
-    'offset_gain',
-    'horn_radius'
-]
+joint_params = {
+    'index': 257,
+    'id': 257,
+    'invert': False,
+    'min_pos': -3.1416,
+    'max_pos': 3.1416,
+    'angle_resolution': 0.0879,
+    'step_per_sec': 50.,
+    'speed': 1.0,
+    'acceleration': 1.0,
+    'torque': 40,
+    'max_torque': 40,
+    'offset': 0.0,
+    'offset_gain': 0.0,
+    'horn_radius': 0.017
+}
 
 class GripperActionServer(Node):
     def __init__(self, base_arm):
@@ -120,8 +120,8 @@ class RobotArmDriver(Node):
             allow_undeclared_parameters=True
         )
         self._lock = threading.Lock()
-        self._joints_command = None
-        self._gripper_command = None
+        self._joints_cmd_subscriber = None
+        self._gripper_cmd_server = None
         self._gripper_state = {}
         self._gripper_state['position'] = 0.0
         self._gripper_state['moving'] = False
@@ -141,9 +141,8 @@ class RobotArmDriver(Node):
         rev_joint_names = self.get_parameter('revolute_joint_names').value
         pris_joint_names = self.get_parameter('prismatic_joint_names').value
         self._initial_position = self.get_parameter('initial_pos').value
-
         self._controller = Controller(serial_port, baud_rate)
-        
+
         self._revolute_config = self._get_joints_config(rev_joint_names, 'revolute_joints')
         self._revolute_joints = Revolute(
             self._controller, 
@@ -175,14 +174,14 @@ class RobotArmDriver(Node):
         joints_config = {}
         for joint_name in joint_names:
             joints_config[joint_name] = {}
-            for param_name in joint_params:
-                self.declare_parameter(f'{joint_type}.{joint_name}.{param_name}')
+            for param_name in joint_params.keys():
+                self.declare_parameter(f'{joint_type}.{joint_name}.{param_name}', joint_params[param_name])
                 param = self.get_parameter(f'{joint_type}.{joint_name}.{param_name}').value
                 joints_config[joint_name][param_name] = param
         return joints_config
 
     def _control_callback(self):
-        if self._joints_command is None or self._gripper_command is None:
+        if self._joints_cmd_subscriber is None or self._gripper_cmd_server is None:
             return
 
         with self._lock:
@@ -192,8 +191,8 @@ class RobotArmDriver(Node):
             self._gripper_state['position'] = pris_pos[0]
             self._gripper_state['moving']  = pris_mov_state[0]
 
-            self._revolute_joints.go_to(self._joints_command)
-            self._prismatic_joints.go_to(self._gripper_command)
+            self._revolute_joints.go_to(self._joints_cmd_subscriber.joints_command)
+            self._prismatic_joints.go_to(self._gripper_cmd_server.gripper_command)
 
             self._joint_states_msg.position = rev_pos + pris_pos
             self._joint_states_msg.velocity = rev_vel + rev_vel
@@ -211,11 +210,11 @@ class RobotArmDriver(Node):
 
     @joints_command_subscriber.setter
     def joints_command_subscriber(self, joints_command_subscriber):
-        self._joints_command = joints_command_subscriber.joints_command
+        self._joints_cmd_subscriber = joints_command_subscriber
 
     @gripper_action_server.setter
     def gripper_action_server(self, gripper_action_server):
-        self._gripper_command = gripper_action_server.gripper_command
+        self._gripper_cmd_server = gripper_action_server
 
     @property
     def gripper_max_position(self):
@@ -227,7 +226,7 @@ class RobotArmDriver(Node):
 
     @property
     def initial_position(self):
-        return self._initial_position
+        return copy.deepcopy(self._initial_position)
 
 
 def main(args=None):
@@ -240,9 +239,9 @@ def main(args=None):
         robot_arm.gripper_action_server = gripper_action_server
 
         executor = MultiThreadedExecutor(num_threads=3)
+        executor.add_node(robot_arm)
         executor.add_node(joints_command_subscriber)
         executor.add_node(gripper_action_server)
-        executor.add_node(robot_arm)
         try:
             executor.spin()
         finally:
