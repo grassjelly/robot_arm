@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="arm_component" params="frame_id child_frame_id mass pos_x pos_y pos_z x_length y_length z_length mesh mirror_mesh joint_name joint_type joint_axis joint_min joint_max joint_velocity joint_effort joint_to_mimic joint_mimic_multiplier">
+        <xacro:if value="${mirror_mesh}">
+            <xacro:property name="mesh_yaw" value="3.1416" />
+        </xacro:if>
+        <xacro:unless value="${mirror_mesh}">
+            <xacro:property name="mesh_yaw" value="0" />
+        </xacro:unless>
+
+        <link name="${child_frame_id}">
+            <xacro:if value="${mesh != ''}">
+                <collision>
+                    <origin rpy="0 0 ${mesh_yaw}" xyz="0 0 0" />
+                    <geometry>
+                        <mesh filename="${mesh}" scale="0.001 0.001 0.001" />
+                    </geometry>
+                </collision>
+                <visual>
+                    <origin rpy="0 0 ${mesh_yaw}" xyz="0 0 0" />
+                    <geometry>
+                        <mesh filename="${mesh}" scale="0.001 0.001 0.001" />
+                    </geometry>
+                    <material name="black" />
+                </visual>
+                <inertial>
+                    <origin xyz="0 0 ${z_length/2.}" />
+                    <mass value="${mass}" />
+                    <inertia ixx="${(1/12) * mass * (y_length * y_length + z_length * z_length)}" ixy="0.0" ixz="0.0"
+                            iyy="${(1/12) * mass * (x_length * x_length + z_length * z_length)}" iyz="0.0"
+                            izz="${(1/12) * mass * (x_length * x_length + y_length * y_length)}" />
+                </inertial>
+            </xacro:if>
+
+        </link>
+        <gazebo reference="${child_frame_id}">
+            <material>Gazebo/FlatBlack</material>
+        </gazebo>
+        <joint name="${joint_name}" type="${joint_type}">
+            <xacro:if value="${joint_type == 'revolute' or joint_type == 'prismatic'}">
+                <xacro:if value="${joint_axis == 'x'}">
+                    <axis xyz="1 0 0" />
+                </xacro:if>
+
+                <xacro:if value="${joint_axis == 'y'}">
+                    <axis xyz="0 1 0" />
+                </xacro:if> 
+
+                <xacro:if value="${joint_axis == 'z'}">
+                    <axis xyz="0 0 1" />
+                </xacro:if>
+                <xacro:if value="${joint_to_mimic != ''}">
+                    <mimic joint="${joint_to_mimic}" multiplier="${joint_mimic_multiplier}" />
+                </xacro:if>
+
+                <limit effort="${joint_effort}" lower="${joint_min}" upper="${joint_max}" velocity="${joint_velocity}" />
+            </xacro:if>
+
+            <parent link="${frame_id}" />
+            <child link="${child_frame_id}" />
+            <origin rpy="0 0 0" xyz="${pos_x} ${pos_y} ${pos_z}" />
+        </joint>
+    </xacro:macro>
+</robot>
