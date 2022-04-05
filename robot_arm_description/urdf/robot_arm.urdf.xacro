@@ -22,13 +22,19 @@
       </visual>
       <inertial>
          <origin xyz="0 0 ${0.005/2.}" />
-         <mass value="10" />
-         <inertia ixx="${(1/12) * 10 * (0.09 * 0.09 + 0.005 * 0.005)}" ixy="0.0" ixz="0.0"
-            iyy="${(1/12) * 10 * (0.045 * 0.045 + 0.005 * 0.005)}" iyz="0.0"
-            izz="${(1/12) * 10 * (0.045 * 0.045 + 0.09 * 0.09)}" />
+         <mass value="3" />
+         <inertia ixx="${(1/12) * 10 * (0.15 * 0.15 + 0.005 * 0.005)}" ixy="0.0" ixz="0.0"
+            iyy="${(1/12) * 10 * (0.12 * 0.12 + 0.005 * 0.005)}" iyz="0.0"
+            izz="${(1/12) * 10 * (0.12 * 0.12 + 0.15 * 0.15)}" />
          </inertial>
       </link>
    <gazebo reference="base_mount">
+      <kp>1000000.0</kp>
+      <kd>1.0</kd>
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+      <maxVel>0.0</maxVel>
+      <minDepth>0.001</minDepth>
       <material>Gazebo/FlatBlack</material>
    </gazebo>
 

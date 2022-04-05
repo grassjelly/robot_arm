@@ -5,10 +5,10 @@
         <xacro:arm_component 
             frame_id="${parent}"
             child_frame_id="box_link"
-            mass="0.02"
+            mass="0.2"
             pos_x="0.0"
             pos_y="0.0"
-            pos_z="0.0575"
+            pos_z="0.0576"
             x_length="0.087"
             y_length="0.087"
             z_length="0.04"
@@ -28,7 +28,7 @@
         <xacro:arm_component 
             frame_id="box_link"
             child_frame_id="pan_link"
-            mass="0.0215"
+            mass="0.215"
             pos_x="-0.012"
             pos_y="0.0"
             pos_z="0.002"
@@ -74,7 +74,7 @@
         <xacro:arm_component 
             frame_id="shoulder_link"
             child_frame_id="elbow_link"
-            mass="0.01"
+            mass="0.1"
             pos_x="0.03"
             pos_y="0.0"
             pos_z="0.2205"
@@ -97,7 +97,7 @@
         <xacro:arm_component 
             frame_id="elbow_link"
             child_frame_id="wrist0_link"
-            mass="0.01"
+            mass="0.1"
             pos_x="0.0"
             pos_y="0.0"
             pos_z="0.176"
@@ -120,7 +120,7 @@
         <xacro:arm_component 
             frame_id="wrist0_link"
             child_frame_id="wrist1_link"
-            mass="0.01"
+            mass="0.1"
             pos_x="0.0"
             pos_y="0.0"
             pos_z="0.0435"
@@ -143,7 +143,7 @@
         <xacro:arm_component 
             frame_id="wrist1_link"
             child_frame_id="wrist2_link"
-            mass="0.01"
+            mass="0.1"
             pos_x="0.0"
             pos_y="0.0"
             pos_z="0.0715"

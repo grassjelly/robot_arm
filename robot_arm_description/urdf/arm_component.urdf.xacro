@@ -59,6 +59,8 @@
             <parent link="${frame_id}" />
             <child link="${child_frame_id}" />
             <origin rpy="0 0 0" xyz="${pos_x} ${pos_y} ${pos_z}" />
+
+            <dynamics damping="0.7" friction="100.0" />
         </joint>
     </xacro:macro>
 </robot>

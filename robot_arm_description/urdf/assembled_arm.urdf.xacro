@@ -14,7 +14,7 @@
       <joint name="tool_joint" type="fixed">
          <parent link="gripper_link" />
          <child link="tool_link" />
-         <origin rpy="0 -3.1416 0" xyz="0 0 -0.005" />
+         <origin rpy="0 -3.1416 0" xyz="0 0 0.1032" />
       </joint>
 
     </xacro:macro>
