@@ -13,7 +13,6 @@
             y_length="0.105"
             z_length="0.049"
             mesh="file://$(find robot_arm_description)/urdf/meshes/gripper_link.stl"
-            mirror_mesh="false"
             joint_name="gripper_joint"
             joint_type="fixed"
             joint_axis=""
@@ -36,7 +35,6 @@
             y_length="0.027"
             z_length="0.05"
             mesh="file://$(find robot_arm_description)/urdf/meshes/finger_link.stl"
-            mirror_mesh="false"
             joint_name="finger_joint"
             joint_type="prismatic"
             joint_axis="y"
@@ -59,7 +57,6 @@
             y_length="0.027"
             z_length="0.05"
             mesh="file://$(find robot_arm_description)/urdf/meshes/finger_link.stl"
-            mirror_mesh="true"
             joint_name="mimic_finger_joint"
             joint_type="prismatic"
             joint_axis="y"
@@ -68,7 +65,7 @@
             joint_velocity="1.5"
             joint_effort="1.0"
             joint_to_mimic="finger_joint"
-            joint_mimic_multiplier="-1"
+            joint_mimic_multiplier="1"
         />
 
     </xacro:macro>

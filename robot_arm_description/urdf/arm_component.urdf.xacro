@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-    <xacro:macro name="arm_component" params="frame_id child_frame_id mass pos_x pos_y pos_z x_length y_length z_length mesh mirror_mesh joint_name joint_type joint_axis joint_min joint_max joint_velocity joint_effort joint_to_mimic joint_mimic_multiplier">
-        <xacro:if value="${mirror_mesh}">
-            <xacro:property name="mesh_yaw" value="3.1416" />
-        </xacro:if>
-        <xacro:unless value="${mirror_mesh}">
-            <xacro:property name="mesh_yaw" value="0" />
-        </xacro:unless>
-
+    <xacro:macro name="arm_component" params="frame_id child_frame_id mass pos_x pos_y pos_z x_length y_length z_length mesh joint_name joint_type joint_axis joint_min joint_max joint_velocity joint_effort joint_to_mimic joint_mimic_multiplier">
+        <xacro:property name="joint_yaw" value="0" />
         <link name="${child_frame_id}">
             <xacro:if value="${mesh != ''}">
                 <collision>
-                    <origin rpy="0 0 ${mesh_yaw}" xyz="0 0 0" />
+                    <origin rpy="0 0 0" xyz="0 0 0" />
                     <geometry>
                         <mesh filename="${mesh}" scale="0.001 0.001 0.001" />
                     </geometry>
                 </collision>
                 <visual>
-                    <origin rpy="0 0 ${mesh_yaw}" xyz="0 0 0" />
+                    <origin rpy="0 0 0" xyz="0 0 0" />
                     <geometry>
                         <mesh filename="${mesh}" scale="0.001 0.001 0.001" />
                     </geometry>
@@ -50,6 +44,7 @@
                     <axis xyz="0 0 1" />
                 </xacro:if>
                 <xacro:if value="${joint_to_mimic != ''}">
+                    <xacro:property name="joint_yaw" value="3.1416" />
                     <mimic joint="${joint_to_mimic}" multiplier="${joint_mimic_multiplier}" />
                 </xacro:if>
 
@@ -58,7 +53,7 @@
 
             <parent link="${frame_id}" />
             <child link="${child_frame_id}" />
-            <origin rpy="0 0 0" xyz="${pos_x} ${pos_y} ${pos_z}" />
+            <origin rpy="0 0 ${joint_yaw}" xyz="${pos_x} ${pos_y} ${pos_z}" />
 
             <dynamics damping="0.7" friction="100.0" />
         </joint>
