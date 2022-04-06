@@ -11,7 +11,7 @@ class Gripper(Node):
         self._action_client.wait_for_server()
 
     def open(self, wait=True):
-        self._send_to_action_server(-1.0, wait)
+        self._send_to_action_server(0.026, wait)
 
     def close(self, wait=True):
         self._send_to_action_server(0.00, wait)
