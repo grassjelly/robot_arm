@@ -10,7 +10,7 @@
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-shapely</exec_depend>
   <exec_depend>python3-scipy</exec_depend>
-  <exec_depend>perception-pcl</exec_depend>
+  <exec_depend>perception_pcl</exec_depend>
   <exec_depend>sensor_msgs_py</exec_depend>
   <exec_depend>robot_arm_msgs</exec_depend>
   <export>
