@@ -15,7 +15,7 @@ def generate_launch_description():
     moveit_config_path = get_package_share_path('robot_arm_moveit_config')
 
     urdf_path = PathJoinSubstitution(
-        [FindPackageShare("robot_arm_description"), "urdf", "arm.urdf.xacro"]
+        [FindPackageShare("robot_arm_description"), "urdf", "robot_arm.urdf.xacro"]
     )
 
     ld = LaunchDescription()
@@ -119,12 +119,19 @@ def generate_launch_description():
     )
     ld.add_action(fake_joint_driver_node)
 
-    spawner_node = Node(
+    arm_spawner_node = Node(
         package='controller_manager',
         executable='spawner.py',
         arguments=['robot_arm_controller'],
     )
-    ld.add_action(spawner_node)
+    ld.add_action(arm_spawner_node)
+
+    gripper_spawner_node = Node(
+        package='controller_manager',
+        executable='spawner.py',
+        arguments=['gripper_controller'],
+    )
+    ld.add_action(gripper_spawner_node)
 
     spawner_node2 = Node(
         package='controller_manager',

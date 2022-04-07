@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="robot_arm">
+   <xacro:macro name="assembled_arm" params="use_sim_time parent">
+      <xacro:property name="gazebo" value="${use_sim_time}" />
+      <xacro:include filename="$(find robot_arm_description)/urdf/plugins.urdf.xacro" />
+
+      <xacro:include filename="$(find robot_arm_description)/urdf/arm_mech.urdf.xacro" />
+      <xacro:include filename="$(find robot_arm_description)/urdf/gripper_mech.urdf.xacro" />
+      
+      <xacro:arm_mech parent="${parent}" />
+      <xacro:gripper_mech parent="wrist2_link" />
+
+      <link name="tool_link" />
+      <joint name="tool_joint" type="fixed">
+         <parent link="gripper_link" />
+         <child link="tool_link" />
+         <origin rpy="0 -3.1416 0" xyz="0 0 0.1032" />
+      </joint>
+
+    </xacro:macro>
+</robot>

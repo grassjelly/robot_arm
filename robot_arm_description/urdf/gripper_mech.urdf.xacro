@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="gripper_mech" params="parent">
+        <xacro:include filename="$(find robot_arm_description)/urdf/arm_component.urdf.xacro" />
+        <xacro:arm_component 
+            frame_id="${parent}"
+            child_frame_id="gripper_link"
+            mass="0.01"
+            pos_x="0.0"
+            pos_y="0.0"
+            pos_z="0.0"
+            x_length="0.034"
+            y_length="0.105"
+            z_length="0.049"
+            mesh="file://$(find robot_arm_description)/urdf/meshes/gripper_link.stl"
+            joint_name="gripper_joint"
+            joint_type="fixed"
+            joint_axis=""
+            joint_min=""
+            joint_max=""
+            joint_velocity=""
+            joint_effort=""
+            joint_to_mimic=""
+            joint_mimic_multiplier=""
+        />
+
+        <xacro:arm_component 
+            frame_id="gripper_link"
+            child_frame_id="finger_link"
+            mass="0.01"
+            pos_x="0.002784"
+            pos_y="0.01408"
+            pos_z="0.0582"
+            x_length="0.02"
+            y_length="0.027"
+            z_length="0.05"
+            mesh="file://$(find robot_arm_description)/urdf/meshes/finger_link.stl"
+            joint_name="finger_joint"
+            joint_type="prismatic"
+            joint_axis="y"
+            joint_min="0."
+            joint_max="0.026"
+            joint_velocity="1.5"
+            joint_effort="1.0"
+            joint_to_mimic=""
+            joint_mimic_multiplier=""
+        />
+
+        <xacro:arm_component 
+            frame_id="gripper_link"
+            child_frame_id="mimic_finger_link"
+            mass="0.01"
+            pos_x="0.002784"
+            pos_y="-0.01408"
+            pos_z="0.0582"
+            x_length="0.02"
+            y_length="0.027"
+            z_length="0.05"
+            mesh="file://$(find robot_arm_description)/urdf/meshes/finger_link.stl"
+            joint_name="mimic_finger_joint"
+            joint_type="prismatic"
+            joint_axis="y"
+            joint_min="0."
+            joint_max="0.026"
+            joint_velocity="1.5"
+            joint_effort="1.0"
+            joint_to_mimic="finger_joint"
+            joint_mimic_multiplier="1"
+        />
+
+    </xacro:macro>
+</robot>

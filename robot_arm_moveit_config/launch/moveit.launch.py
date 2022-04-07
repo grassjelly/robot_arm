@@ -15,7 +15,7 @@ def generate_launch_description():
     moveit_config_path = get_package_share_path('robot_arm_moveit_config')
 
     urdf_path = PathJoinSubstitution(
-        [FindPackageShare("robot_arm_description"), "urdf", "arm.urdf.xacro"]
+        [FindPackageShare("robot_arm_description"), "urdf", "robot_arm.urdf.xacro"]
     )
 
     ld = LaunchDescription()
