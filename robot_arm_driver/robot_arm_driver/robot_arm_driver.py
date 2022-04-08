@@ -104,7 +104,12 @@ class JointsCommandSubscriber(Node):
         self._pos_goal_subscirber
 
     def _pos_goal_callback(self, msg):
-        with self._lock:
+        with self._lock: 
+            #use error in positions to identify if this is real commands 
+            all_zeros = all([v == 0 for v in msg.error.positions])
+            if all_zeros:
+                return
+
             for i, pos in enumerate(msg.actual.positions):
                 self._joints_command[i] = pos
 
