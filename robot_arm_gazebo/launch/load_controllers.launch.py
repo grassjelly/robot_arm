@@ -26,17 +26,17 @@ def generate_launch_description():
     use_sim_time = True
 
     load_joint_state_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'joint_state_broadcaster'],
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'joint_state_broadcaster'],
         output='screen'
     )
 
     load_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'robot_arm_controller'],
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'robot_arm_controller'],
         output='screen'
     )
 
     load_grippper_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start', 'gripper_controller'],
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'gripper_controller'],
         output='screen'
     )
 
