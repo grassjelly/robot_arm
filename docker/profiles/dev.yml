@@ -1,0 +1,25 @@
+name: dev
+root: <%= ENV["TMUXINATOR_CONFIG"] %>
+pre_window:
+  - export DISPLAY=:200
+  - export HOST_UID=$(id -u)
+  - export HOST_GID=$(id -g)
+
+on_project_start:
+  - DISPLAY=:200 docker compose up -d kasmvnc
+  - DISPLAY=:200 HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up -d dev
+
+on_project_stop:
+  - docker compose down
+
+windows:
+  - main:
+      panes:
+        - docker compose exec dev bash
+        - docker compose exec dev bash
+        - docker compose exec dev bash
+        - docker compose exec dev bash
+        - docker compose exec dev bash
+        - docker compose exec dev bash
+        - echo "Add more panes as needed for development tasks in robot_arm/docker/profiles/dev.yml"
+        - echo "To exit, Ctrl +B then D. Run 'tmuxinator stop dev' to stop the containers."

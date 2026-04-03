@@ -1,0 +1,65 @@
+services:
+  build:
+    image: robot_arm:${BASE_IMAGE}
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+      args:
+        - VIRTUALGL_VER=${VIRTUALGL_VER:-3.1}
+        - HOST_UID=${HOST_UID:-1000}
+        - HOST_GID=${HOST_GID:-1000}
+        - BASE_IMAGE=${BASE_IMAGE}
+        - DOCKER_ROS_DISTRO=${DOCKER_ROS_DISTRO:-jazzy}
+      target: final
+
+  base:
+    image: robot_arm:${BASE_IMAGE}
+    stdin_open: true
+    tty: true
+    network_mode: host
+    ipc: host
+    privileged: true
+    environment:
+      - GPU_ID=${GPU_ID:-0}
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - $HOME/.Xauthority:/home/ros/.Xauthority
+
+  gazebo:
+    container_name: gazebo
+    extends: base
+    environment:
+      - IGN_IP=127.0.0.1
+      - GZ_IP=127.0.0.1
+    command: >
+      ros2 launch robot_arm_gazebo gazebo.launch.py
+
+  moveit:
+    container_name: gazebo
+    extends: base
+    command: >
+      ros2 launch robot_arm_moveit_config moveit.launch.py sim:=${SIM:-false} rviz:=${RVIZ:-false}
+
+  dev:
+    container_name: dev
+    extends: base
+    command: sleep infinity
+    volumes:
+      - ../.:/home/ros/robot_arm_ws/src/robot_arm
+
+  rviz:
+    container_name: rviz
+    extends: base
+    command: rviz2
+
+  kasmvnc:
+    container_name: kasmvnc
+    image: lsiobase/kasmvnc:alpine321
+    network_mode: host
+    environment:
+      - DISPLAY=:200
+    volumes:
+      - ./kasm-autostart:/defaults/autostart

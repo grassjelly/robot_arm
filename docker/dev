@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -z "$(docker compose ps -q dev 2>/dev/null)" ]; then
+    DISPLAY=$DISPLAY HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up -d dev
+fi
+
+docker compose exec dev bash
