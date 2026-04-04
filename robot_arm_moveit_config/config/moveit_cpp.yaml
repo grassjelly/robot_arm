@@ -1,0 +1,124 @@
+#https://github.com/moveit/moveit_tutorials/blob/master/doc/moveit_cpp/config/moveit_cpp.yaml
+# 3D sensors — sensors_3d.yaml uses /**:ros__params format for move_group;
+# MoveItPy reads these at the flat top level.
+sensors:
+  - head_cloud
+
+head_cloud:
+  sensor_plugin: occupancy_map_monitor/PointCloudOctomapUpdater
+  point_cloud_topic: /camera/depth/color/points
+  filtered_cloud_topic: /camera/depth/color/filtered_points
+  max_range: 5.0
+  max_update_rate: 1.0
+  padding_offset: 0.1
+  padding_scale: 1.0
+  point_subsample: 1
+
+octomap_resolution: 0.1
+octomap_frame: base_mount
+
+# Kinematics — kinematics.yaml uses /**:ros__params format for move_group;
+# MoveItPy reads robot_description_kinematics at the flat top level.
+robot_description_kinematics:
+  robot_arm:
+    kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin
+    kinematics_solver_search_resolution: 0.005
+    kinematics_solver_timeout: 0.005
+
+planning_scene_monitor_options:
+  name: "planning_scene_monitor"
+  robot_description: "robot_description"
+  joint_state_topic: "/joint_states"
+  attached_collision_object_topic: "/attached_collision_objects"
+  publish_planning_scene_topic: "/publish_planning_scene"
+  monitored_planning_scene_topic: "/monitored_planning_scene"
+  wait_for_initial_state_timeout: 10.0
+  use_sim_time: true
+
+planning_pipelines:
+  pipeline_names:
+    - ompl
+
+ompl:
+  planning_plugins:
+    - ompl_interface/OMPLPlanner
+  request_adapters:
+    - default_planning_request_adapters/ResolveConstraintFrames
+    - default_planning_request_adapters/CheckStartStateBounds
+    - default_planning_request_adapters/CheckStartStateCollision
+  response_adapters:
+    - default_planning_response_adapters/AddTimeOptimalParameterization
+    - default_planning_response_adapters/ValidateSolution
+    - default_planning_response_adapters/DisplayMotionPath
+  start_state_max_bounds_error: 0.1
+  robot_arm:
+    default_planner_config: RRTConnect
+    planner_configs:
+      - RRTConnect
+  planner_configs:
+    RRTConnect:
+        type: geometric::RRTConnect
+        range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+
+plan_request_params:
+  planning_attempts: 1
+  planning_pipeline: ompl
+  planner_id: RRTConnect
+  planning_time: 5.0
+  max_velocity_scaling_factor: 1.0
+  max_acceleration_scaling_factor: 1.0
+
+# Controller manager — trajectory_execution.yaml uses /**:ros__params format for move_group;
+# MoveItPy needs it flat here.
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+moveit_manage_controllers: true
+
+moveit_simple_controller_manager:
+  controller_names:
+    - robot_arm_controller
+  robot_arm_controller:
+    action_ns: follow_joint_trajectory
+    default: true
+    type: FollowJointTrajectory
+    joints:
+      - pan_joint
+      - shoulder_joint
+      - elbow_joint
+      - wrist0_joint
+      - wrist1_joint
+      - wrist2_joint
+
+# Joint limits — joint_limits.yaml uses /**:ros__params format (needed by move_group);
+# MoveItPy reads robot_description_planning at the flat top level.
+robot_description_planning:
+  joint_limits:
+    pan_joint:
+      has_velocity_limits: true
+      max_velocity: 1.0
+      has_acceleration_limits: true
+      max_acceleration: 1.0
+    shoulder_joint:
+      has_velocity_limits: true
+      max_velocity: 1.0
+      has_acceleration_limits: true
+      max_acceleration: 1.0
+    elbow_joint:
+      has_velocity_limits: true
+      max_velocity: 1.0
+      has_acceleration_limits: true
+      max_acceleration: 1.0
+    wrist0_joint:
+      has_velocity_limits: true
+      max_velocity: 1.0
+      has_acceleration_limits: true
+      max_acceleration: 1.0
+    wrist1_joint:
+      has_velocity_limits: true
+      max_velocity: 1.0
+      has_acceleration_limits: true
+      max_acceleration: 1.0
+    wrist2_joint:
+      has_velocity_limits: true
+      max_velocity: 1.0
+      has_acceleration_limits: true
+      max_acceleration: 0.46
