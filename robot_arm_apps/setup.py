@@ -23,7 +23,9 @@ setup(
     entry_points={
         'console_scripts': [
             'moveit_test = robot_arm_apps.moveit_test:main',
-            'table_pick_n_place = robot_arm_apps.table_pick_n_place:main'
+            'table_pick_n_place = robot_arm_apps.table_pick_n_place:main',
+            'moveit_py_demo = robot_arm_apps.moveit_py_demo:main',
+            'moveit_node_demo = robot_arm_apps.moveit_node_demo:main',
         ],
     },
 )
