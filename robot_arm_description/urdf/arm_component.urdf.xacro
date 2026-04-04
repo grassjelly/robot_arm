@@ -42,7 +42,9 @@
                 </xacro:if>
                 <xacro:if value="${joint_to_mimic != ''}">
                     <xacro:property name="joint_yaw" value="3.1416" />
-                    <mimic joint="${joint_to_mimic}" multiplier="${joint_mimic_multiplier}" />
+                    <xacro:unless value="${gazebo}">
+                        <mimic joint="${joint_to_mimic}" multiplier="${joint_mimic_multiplier}" />
+                    </xacro:unless>
                 </xacro:if>
 
                 <limit effort="${joint_effort}" lower="${joint_min}" upper="${joint_max}" velocity="${joint_velocity}" />
