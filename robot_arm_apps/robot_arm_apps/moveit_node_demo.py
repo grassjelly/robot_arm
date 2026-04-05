@@ -5,26 +5,16 @@ Pick-and-place demo using the robot_arm_python library, wrapped in a ROS2 node.
 MoveIt and Gripper both manage their own internal executors, so only this node
 needs to be added to the MultiThreadedExecutor.
 """
+import gc
+
 import rclpy
+import rclpy.logging
+import tf2_ros
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped
-
 from robot_arm_python.moveit import MoveIt
 from robot_arm_python.gripper import Gripper
-
-
-def make_pose(frame_id, x, y, z, qx=0.0, qy=0.0, qz=0.0, qw=1.0) -> PoseStamped:
-    ps = PoseStamped()
-    ps.header.frame_id = frame_id
-    ps.pose.position.x = x
-    ps.pose.position.y = y
-    ps.pose.position.z = z
-    ps.pose.orientation.x = qx
-    ps.pose.orientation.y = qy
-    ps.pose.orientation.z = qz
-    ps.pose.orientation.w = qw
-    return ps
+from robot_arm_python.utils import make_pose, transform_pose
 
 
 class RobotArmNode(Node):
@@ -35,14 +25,14 @@ class RobotArmNode(Node):
         self.robot = MoveIt()
         self.gripper = Gripper()
 
-        self._ran = False
+        self._tf_buffer = tf2_ros.Buffer()
+        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
+
         # Defer motion until the executor is spinning.
-        self.create_timer(1.0, self._run)
+        self._timer = self.create_timer(1.0, self._run)
 
     def _run(self) -> None:
-        if self._ran:
-            return
-        self._ran = True
+        self._timer.destroy()
 
         log = self.get_logger()
 
@@ -57,7 +47,12 @@ class RobotArmNode(Node):
         # ------------------------------------------------------------------
         log.info("Step 2: moving to pre-grasp pose")
         self.robot.move_to(
-            pose=make_pose("base_mount", x=0.1, y=0.0, z=0.1)
+            pose=transform_pose(
+                make_pose("base_mount", x=0.1, y=0.0, z=0.1),
+                self._tf_buffer,
+                source_frame="base_mount",
+                target_frame="tool_link",
+            )
         )
         self.gripper.open()
 
@@ -66,7 +61,12 @@ class RobotArmNode(Node):
         # ------------------------------------------------------------------
         log.info("Step 3: descending to grasp pose")
         self.robot.move_to(
-            pose=make_pose("base_mount", x=0.1, y=0.0, z=0.05)
+            pose=transform_pose(
+                make_pose("base_mount", x=0.1, y=0.0, z=0.0),
+                self._tf_buffer,
+                source_frame="base_mount",
+                target_frame="tool_link",
+            )
         )
         self.gripper.close()
 
@@ -93,6 +93,8 @@ class RobotArmNode(Node):
         self.robot.move_to(configuration_name="home")
 
         log.info("Demo complete")
+        self.destroy_node()
+        rclpy.shutdown()
 
 
 def main(args=None) -> None:
@@ -104,7 +106,8 @@ def main(args=None) -> None:
         executor.spin()
     finally:
         executor.shutdown()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
