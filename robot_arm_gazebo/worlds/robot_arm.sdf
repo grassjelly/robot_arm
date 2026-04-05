@@ -2,21 +2,6 @@
 <sdf version="1.8">
   <world name="robot_arm_world">
 
-    <gui fullscreen="0">
-      <plugin filename="GzGrid" name="Grid config">
-        <gz-gui>
-          <property key="resizable" type="bool">false</property>
-          <property key="state" type="string">floating</property>
-          <property key="showTitleBar" type="bool">false</property>
-        </gz-gui>
-        <cell_count>50</cell_count>
-        <vertical_cell_count>0</vertical_cell_count>
-        <cell_length>0.1</cell_length>
-        <pose>0 0 0 0 0 0</pose>
-        <color>0.8 0.8 0.8 1</color>
-      </plugin>
-    </gui>
-
     <gravity>0 0 -9.8</gravity>
     <physics default="0" name="default_physics" type="ode">
       <max_step_size>0.01</max_step_size>
