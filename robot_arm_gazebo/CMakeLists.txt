@@ -6,7 +6,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 
 install(
-  DIRECTORY launch rviz
+  DIRECTORY launch models rviz worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
