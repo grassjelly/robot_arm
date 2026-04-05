@@ -2,6 +2,8 @@ name: sim
 root: <%= ENV["TMUXINATOR_CONFIG"] %>
 pre_window:
   - export DISPLAY=:200
+  - export SIM=true
+  - export RVIZ=true
 on_project_stop:
   - docker compose down
 windows:
