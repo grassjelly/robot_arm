@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import AppendEnvironmentVariable, DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -28,6 +28,14 @@ def generate_launch_description():
         [FindPackageShare('ros_gz_sim'), 'launch', 'gz_sim.launch.py']
     )
 
+    world_path = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_gazebo'), 'worlds', 'robot_arm.sdf']
+    )
+
+    models_path = PathJoinSubstitution(
+        [FindPackageShare('robot_arm_gazebo'), 'models']
+    )
+
     description_launch_path = PathJoinSubstitution(
         [FindPackageShare('robot_arm_description'), 'launch', 'description.launch.py']
     )
@@ -37,6 +45,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH', models_path),
+
         DeclareLaunchArgument(
             name='gui',
             default_value='true',
@@ -70,7 +80,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(gazebo_launch_path),
             launch_arguments={
-                'gz_args': '-r -s empty.sdf'
+                'gz_args': ['-r -s ', world_path]
             }.items()
         ),
 
