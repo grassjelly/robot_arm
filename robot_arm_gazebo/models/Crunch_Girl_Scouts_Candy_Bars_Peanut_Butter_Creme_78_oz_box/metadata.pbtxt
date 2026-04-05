@@ -1,0 +1,35 @@
+model {
+  file: "model.sdf"
+}
+name: "Crunch_Girl_Scouts_Candy_Bars_Peanut_Butter_Creme_78_oz_box"
+description: "Crunch Girl Scouts Candy Bars, Peanut Butter Creme - 7.8 oz box"
+version: 1
+authors {
+  name: "Google"
+  email: "scanned-objects@google.com"
+}
+legal {
+  copyright: "Copyright 2020 Google LLC."
+  license: "Creative Commons Attribution 4.0 International"
+}
+annotations {
+  key: "brand"
+  value: "Crunch"
+}
+annotations {
+  key: "gtin"
+  value: "00028000907976"
+}
+annotations {
+  key: "sku"
+  value: "00028000907976"
+}
+compatibilities {
+  name: "Gazebo"
+  version {
+    major: 11
+  }
+}
+categories {
+  first: "Consumer Goods"
+}
