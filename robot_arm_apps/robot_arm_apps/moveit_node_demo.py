@@ -14,7 +14,7 @@ from robot_arm_python.moveit import MoveIt
 from robot_arm_python.gripper import Gripper
 
 
-def make_pose(frame_id, x, y, z, qx=0.0, qy=1.0, qz=0.0, qw=0.0) -> PoseStamped:
+def make_pose(frame_id, x, y, z, qx=0.0, qy=0.0, qz=0.0, qw=1.0) -> PoseStamped:
     ps = PoseStamped()
     ps.header.frame_id = frame_id
     ps.pose.position.x = x
@@ -57,7 +57,7 @@ class RobotArmNode(Node):
         # ------------------------------------------------------------------
         log.info("Step 2: moving to pre-grasp pose")
         self.robot.move_to(
-            pose=make_pose("base_mount", x=0.192, y=-0.128, z=0.116)
+            pose=make_pose("base_mount", x=0.1, y=0.0, z=0.1)
         )
         self.gripper.open()
 
@@ -66,7 +66,7 @@ class RobotArmNode(Node):
         # ------------------------------------------------------------------
         log.info("Step 3: descending to grasp pose")
         self.robot.move_to(
-            pose=make_pose("base_mount", x=0.192, y=-0.128, z=0.031)
+            pose=make_pose("base_mount", x=0.1, y=0.0, z=0.05)
         )
         self.gripper.close()
 
